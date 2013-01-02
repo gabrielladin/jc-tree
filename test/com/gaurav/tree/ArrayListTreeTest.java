@@ -528,8 +528,10 @@ public class ArrayListTreeTest {
 	  		Assert.assertEquals(false, tree.equals(arrayListTree));
 	  		break;
 	  	case 1:
-	  		ArrayListTree<String> clone = (ArrayListTree<String>) tree.clone();
-	  		ArrayListTree<String> clone2 = (ArrayListTree<String>) tree.clone();
+	  		@SuppressWarnings("unchecked")
+			ArrayListTree<String> clone = (ArrayListTree<String>) tree.clone();
+	  		@SuppressWarnings("unchecked")
+			ArrayListTree<String> clone2 = (ArrayListTree<String>) tree.clone();
 	  		Assert.assertEquals(true, tree.equals(clone));
 	  		clone.remove("C1-1-1");
 	  		Assert.assertEquals(false, tree.equals(clone));
