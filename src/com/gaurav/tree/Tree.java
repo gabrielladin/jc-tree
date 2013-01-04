@@ -91,7 +91,7 @@ public interface Tree<E> extends Collection<E>{
 	 * @param child the ancestors of this will be searched for the node
 	 * @return true if any of the parent of child is equal to node, false otherwise. if node and child node are 
 	 * equal to each other then it returns false
-	 * @throws NodeNotFoundException 
+	 * @throws NodeNotFoundException if child is not found in the tree
 	 */
 	public boolean isAncestor(E node, E child) throws NodeNotFoundException;
 	/**
@@ -100,7 +100,7 @@ public interface Tree<E> extends Collection<E>{
 	 * @param parent the descendents of this will be searched for the node
 	 * @return true if any of the node belongs to the tree rooted at parent, false otherwise. if node and child 
 	 * node are equal to each other then it returns false
-	 * @throws NodeNotFoundException 
+	 * @throws NodeNotFoundException if parent is not found in the tree
 	 */
 	public boolean isDescendant(E parent, E node) throws NodeNotFoundException;
 	/**

@@ -59,6 +59,7 @@ public class ArrayListTreeTest {
 		  Assert.assertEquals(true, tree.contains("New"));
 		  Assert.assertEquals(initialSize + 1, tree.size());
 		  Assert.assertEquals(true, tree.add("New","Child"));
+		  Assert.assertEquals(false, tree.add("Child"));
 		  Assert.assertEquals(true, tree.contains("Child"));
 		  Assert.assertEquals(initialSize + 2, tree.size());
 	  }
@@ -194,21 +195,30 @@ public class ArrayListTreeTest {
 		  break;
 	  }
   }
-
   
   @Test(dataProvider = "getTree")
   public void isAncestor(int testCaseNumber, ArrayListTree<String> tree) throws NodeNotFoundException {
 	  if(testCaseNumber == 1) {
 		  Assert.assertEquals(true, tree.isAncestor("Root1", "C2-1-1"));
 		  Assert.assertEquals(false, tree.isAncestor("C1", "C2-1-1"));
+		  try {
+			  Assert.assertEquals(false, tree.isAncestor(null, "C2-1-1"));
+		  } catch (IllegalArgumentException e) {
+			  //passed
+		  }
+		  try {
+			  Assert.assertEquals(false, tree.isAncestor("C2-1-1", null));
+		  } catch (IllegalArgumentException e) {
+			  //passed
+		  }
 	  }
   }
   
   @Test(dataProvider = "getTree")
   public void isDescendant(int testCaseNumber, ArrayListTree<String> tree) throws NodeNotFoundException {
 	  if(testCaseNumber == 1) {
-		  Assert.assertEquals(true, tree.isAncestor("Root1", "C2-1-1"));
-		  Assert.assertEquals(false, tree.isAncestor("C1", "C2-1-1"));
+		  Assert.assertEquals(true, tree.isDescendant("Root1", "C2-1-1"));
+		  Assert.assertEquals(false, tree.isDescendant("C1", "C2-1-1"));
 	  }
   }
 
@@ -287,20 +297,26 @@ public class ArrayListTreeTest {
   
   @Test(dataProvider = "getTree")
   public void parent(int testCaseNumber, ArrayListTree<String> tree) throws NodeNotFoundException {
-	  try {
-		  tree.parent(null);
-		  Assert.assertEquals(false, true);
-	  } catch (IllegalArgumentException e) {
-		  //passed
-	  }
-	  try {
-		  tree.parent("Not present");
-		  Assert.assertEquals(false, true);
-	  } catch (NodeNotFoundException e) {
-		  //passed
-	  }
 	  switch(testCaseNumber) {
 	  	case 0:
+	  		 try {
+	  			  tree.parent(null);
+	  			  Assert.assertEquals(false, true);
+	  		  } catch (IllegalArgumentException e) {
+	  			  //passed
+	  		  }
+	  		  try {
+	  			  tree.parent("Not present");
+	  			  Assert.assertEquals(false, true);
+	  		  } catch (NodeNotFoundException e) {
+	  			  //passed
+	  		  }
+	  		  break;
+	  	case 1:
+	  		Assert.assertEquals(tree.parent("C1-1-1"), "C1-1");
+	  		Assert.assertEquals(tree.parent("C2-1"), "C2");
+	  		Assert.assertNull(tree.parent("Root1"));
+	  		break;
 	  }
   }
 

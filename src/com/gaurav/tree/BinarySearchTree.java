@@ -39,11 +39,19 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 	private int depth = 0;
 	private final int MAX_CHILDREN = 2;
 	private int rootIndex = -1;
+	/** 
+	 * A binary search tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use add(child)
+	 * The method throws {@link UnsupportedOperationException}
+	 */
 	@Override
 	public boolean add(E parent, E child) throws NodeNotFoundException
 	{
 		throw new UnsupportedOperationException("A binary search tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use add(child)");
 	}
+	/**
+	 * A binary search tree determines parent of a child on its own and hence it is not possible to add the child to any given parent or index. Please use add(child).
+	 * The method throws {@link UnsupportedOperationException}
+	 */
 	@Override
 	public boolean add(E parent, E child, int index) throws NodeNotFoundException
 	{
@@ -235,9 +243,15 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 		else
 			return nodeList.contains(o);
 	}
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		return nodeList.containsAll(c);
+		for(Object i : c) {
+			checkNode((E) i);
+			if(!nodeList.contains(i))
+				return false;
+		}
+		return true;
 	}
 	@Override
 	public int depth() {
@@ -258,32 +272,12 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 	@Override
 	public boolean isAncestor(E node, E child) throws NodeNotFoundException {
 		checkNode(child);
-		child = parent(child);
-		if(node != null) {//if parent is root, it has to be an ancestor
-			while(child != null) {
-				if(child.equals(node))
-					return true;
-				else
-					child = parent(child);
-			}
-		}
-		return true;
+		return new TreeHelper().isAncestor(this, node, child);
 	}
 	@Override
 	public boolean isDescendant(E parent, E node) throws NodeNotFoundException {
-		checkNode(node);
-		int index = nodeList.indexOf(node);
-		E child = parent(node);
-		if(index > -1) {
-			while(child != null) {
-				if(child.equals(parent))
-					return true;
-				else
-					child = parent(child);
-			}
-			return false;
-		} else
-			throw new NodeNotFoundException("No node was found for object");
+		checkNode(parent);
+		return new TreeHelper().isDescendant(this, parent, node);
 	}
 	@Override
 	public boolean isEmpty() {
@@ -313,8 +307,7 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 			for(int len = chidrenLength; i < len; i++)
 				if(children[i] > -1)
 					leaves(children[i], list);
-		}
-		else if(isChildrenArrayEmpty(childrenArray.get(nodeIndex)))
+		} else if(isChildrenArrayEmpty(childrenArray.get(nodeIndex)))
 			list.add(nodeList.get(nodeIndex));
 		return list;
 	}
@@ -380,18 +373,26 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 		int successorIndexOf = nodeList.indexOf(successor);
 		nodeList.set(index, successor);
 		nodeList.set(successorIndexOf, (E) o);
-		remove(o);		
+		remove(o);
 	}
 	private void deleteCase2(int index) {
 		Integer parentIndex = parentList.set(index, -1);
-		for(int i = 0; i < childrenArray.get(parentIndex).length; i++)
-			if(childrenArray.get(parentIndex)[i] == index)
-				childrenArray.get(parentIndex)[i] = -1;
+		for(int i = 0; i < childrenArray.get(parentIndex).length; i++) {
+			if(childrenArray.get(parentIndex)[i] == index) {
+				if(childrenArray.get(index)[0] > -1)
+					childrenArray.get(parentIndex)[i] = childrenArray.get(index)[0];
+				else
+					childrenArray.get(parentIndex)[i] = childrenArray.get(index)[1];
+				break;
+			}
+		}
 		nodeList.set(index, null);
 		size--;
 		for(int i : childrenArray.get(index))
 			if(i > -1)
 				parentList.set(i, parentIndex);
+		Arrays.fill(childrenArray.get(index), -1);
+		parentList.set(index, -1);
 		depth = recalculateDepth(rootIndex, 0);		
 	}
 	private void deleteCase1(int index) {
@@ -401,6 +402,8 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 				childrenArray.get(parentIndex)[i] = -1;
 		nodeList.set(index, null);
 		size--;
+		Arrays.fill(childrenArray.get(index), -1);
+		parentList.set(index, -1);
 		depth = recalculateDepth(rootIndex, 0);
 	}
 	private E successor(E node) throws NodeNotFoundException {
@@ -593,5 +596,22 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 	 */
 	public E right(E parent) throws NodeNotFoundException {
 		return child(parent, 1);
+	}
+	@Override
+	public int hashCode() {
+		return getCurrentList().hashCode();
+	}
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(Object o) {
+		if(o != null && o instanceof BinarySearchTree) {
+			try {
+				return new TreeHelper().isEqual((BinarySearchTree<E>) o, this, ((BinarySearchTree<E>) o).root(), root());
+			} catch (NodeNotFoundException e) {
+				e.printStackTrace();
+				return false;
+			}
+		} else
+			return false;
 	}
 }

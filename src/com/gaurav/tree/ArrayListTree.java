@@ -223,31 +223,13 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable{
 	}
 	@Override
 	public boolean isAncestor(E node, E child) throws NodeNotFoundException {
-		child = parent(child);
-		while(child != null) {
-			if(child.equals(node))
-				return true;
-			else
-				child = parent(child);
-		}
-		return false;
+		checkNode(child);
+		return new TreeHelper().isAncestor(this, node, child);
 	}
 	@Override
 	public boolean isDescendant(E parent, E node) throws NodeNotFoundException {
-		checkNode(node);
-		int index = nodeList.indexOf(node);
-		E child = parent(node);
-		if(index > -1) {
-			while(child != null) {
-				if(child.equals(parent))
-					return true;
-				else
-					child = parent(child);
-			}
-			return false;
-		}
-		else
-			throw new NodeNotFoundException("No node was found for object");
+		checkNode(parent);
+		return new TreeHelper().isDescendant(this, parent, node);
 	}
 	@Override
 	public boolean isEmpty() {
@@ -479,7 +461,7 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable{
 	public boolean equals(Object o) {
 		if(o != null && o instanceof ArrayListTree) {
 			try {
-				return isEqual((ArrayListTree<E>) o, root(), ((ArrayListTree<E>) o).root());
+				return new TreeHelper().isEqual((ArrayListTree<E>) o, this, ((ArrayListTree<E>) o).root(), root());
 			} catch (NodeNotFoundException e) {
 				e.printStackTrace();
 				return false;
@@ -487,7 +469,7 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable{
 		} else
 			return false;
 	}
-	private boolean isEqual(ArrayListTree<E> o, E thisNode, E testNode) throws NodeNotFoundException {
+	/*private boolean isEqual(ArrayListTree<E> o, E thisNode, E testNode) throws NodeNotFoundException {
 		if((thisNode == null && testNode == null))
 			return true;
 		else if(thisNode != null && testNode != null && thisNode.equals(testNode)) {
@@ -502,5 +484,5 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable{
 				return false;
 		} else
 			return false;
-	}
+	}*/
 }

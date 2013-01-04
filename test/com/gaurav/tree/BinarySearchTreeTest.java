@@ -1,231 +1,626 @@
 package com.gaurav.tree;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 public class BinarySearchTreeTest {
+	@DataProvider
+	public Object[][] getTree() {
+		BinarySearchTree<String> BinarySearchTree = new BinarySearchTree<String>();
+		BinarySearchTree.add("C6");
+		BinarySearchTree.add("C3");
+		BinarySearchTree.add("C9");
+		BinarySearchTree.add("C1");
+		BinarySearchTree.add("C4");
+		BinarySearchTree.add("C7");
+		BinarySearchTree.add("CB");
+		BinarySearchTree.add("C2");
+		BinarySearchTree.add("C5");
+		BinarySearchTree.add("C8");
+		BinarySearchTree.add("CA");
+		BinarySearchTree.add("CC");
+		return new Object[][]{{0, new BinarySearchTree<String>()},{1, BinarySearchTree}};
+	  }
 
-  @Test
-  public void addEE() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void addE(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	int initialSize = tree.size();
+    Assert.assertEquals(true, tree.add("C1.5"));
+    Assert.assertEquals(initialSize, tree.size() - 1);
+    Assert.assertEquals(true, tree.contains("C1.5"));
+    switch(testCaseNumber) {
+    	case 0:
+    		Assert.assertEquals("C1.5", tree.root());
+    		Assert.assertEquals(false, tree.add("C1.5"));
+    		break;
+    	case 1:
+    		Assert.assertEquals("C1.5", tree.left("C2"));
+    		Assert.assertEquals(true, tree.add("C0.5"));
+    		Assert.assertEquals("C0.5", tree.left("C1"));
+    		Assert.assertEquals(true, tree.add("CD"));
+    		Assert.assertEquals("CD", tree.right("CC"));
+    		Assert.assertEquals(false, tree.add("C1.5"));
+    }
   }
 
-  @Test
-  public void addEEint() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree", expectedExceptions = {UnsupportedOperationException.class})
+  public void addEE(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  Assert.assertEquals(true, tree.add(tree.root(), "New"));
+  }
+  @Test(dataProvider = "getTree", expectedExceptions = {UnsupportedOperationException.class})
+  public void addEEInt(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  Assert.assertEquals(true, tree.add(tree.root(), "New", 0));
   }
 
-  @Test
-  public void addE() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void addAllCollectionextendsE(int testCaseNumber, BinarySearchTree<String> tree) {
+	int initialSize = tree.size();
+	for (String i : Arrays.asList(new String[]{"1","2","3"}))
+		tree.add(i);
+	Assert.assertEquals(initialSize + 3, tree.size());
+	Assert.assertEquals(true, tree.contains("1"));
+	Assert.assertEquals(true, tree.contains("2"));
+	Assert.assertEquals(true, tree.contains("3"));
   }
 
-  @Test
-  public void addAllCollectionextendsE() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void addAllECollectionextendsE(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  int initialSize = tree.size();
+	  if(initialSize > 0) {
+	      for (String i : Arrays.asList(new String[]{"1","2","3"}))
+		    tree.add(i);
+	      Assert.assertEquals(initialSize + 3, tree.size());
+		  Assert.assertEquals(true, tree.contains("1"));
+		  Assert.assertEquals(true, tree.contains("2"));
+		  Assert.assertEquals(true, tree.contains("3"));
+	  }
   }
 
-  @Test
-  public void addAllECollectionextendsE() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void children(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  try {
+		  tree.children(null);
+		  Assert.assertEquals(false, true);
+	  } catch (IllegalArgumentException e) {
+		  //passed
+	  }
+	  try {
+		  tree.children("Not present");
+		  Assert.assertEquals(false, true);
+	  } catch (NodeNotFoundException e) {
+		  //passed
+	  }
+	  if(testCaseNumber == 1)
+		for(String i : tree.children(tree.root()))
+		  Assert.assertEquals(tree.root(), tree.parent(i));
   }
 
-  @Test
-  public void addChildEE() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void clear(int testCaseNumber, BinarySearchTree<String> tree) {
+	tree.clear();
+    Assert.assertEquals(0, tree.size());
   }
 
-  @Test
-  public void addChildEEint() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void commonAncestor(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	for(String i: tree)
+		for(String j: tree)
+			Assert.assertNotEquals(null, tree.commonAncestor(i, j));
+	if(testCaseNumber == 1) {
+	  Assert.assertEquals(tree.root(), tree.commonAncestor(tree.root(), tree.leaves().get(0)));
+	  List<String> leaves = tree.leaves();
+	  Assert.assertEquals(tree.root(), tree.commonAncestor(tree.children(tree.root()).get(0), leaves.get(leaves.size() - 1)));
+	}
   }
 
-  @Test
-  public void addChildEintint() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void contains(int testCaseNumber, BinarySearchTree<String> tree) {
+	  Assert.assertEquals(false, tree.contains(null));
+	  Assert.assertEquals(false, tree.contains("Not present"));
+	  for(String i: tree)
+		  Assert.assertEquals(true, tree.contains(i));
   }
 
-  @Test
-  public void addRoot() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void containsAll(int testCaseNumber, BinarySearchTree<String> tree) {
+	  try {
+		  tree.containsAll(Arrays.asList(new String[]{null}));
+		  Assert.assertEquals(false, true);
+	  } catch (IllegalArgumentException e) {
+		  //passed
+	  }
+	  Assert.assertEquals(false, tree.containsAll(Arrays.asList(new String[]{"Not Present"})));
+	  Assert.assertEquals(true, tree.containsAll(tree.inOrderTraversal())); 
   }
 
-  @Test
-  public void checkIndex() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void depth(int testCaseNumber, BinarySearchTree<String> tree) {
+	  if(testCaseNumber == 0)
+		  Assert.assertEquals(0, tree.depth());
+	  else if(testCaseNumber == 1) {
+		  Assert.assertEquals(4, tree.depth());
+		  tree.removeAll(tree.leaves());
+		  Assert.assertEquals(3, tree.depth());
+		  tree.removeAll(tree.leaves());
+		  Assert.assertEquals(2, tree.depth());
+		  tree.clear();
+		  Assert.assertEquals(0, tree.depth());
+	  }
   }
 
-  @Test
-  public void checkNode() {
-    throw new RuntimeException("Test not implemented");
+  
+  @Test(dataProvider = "getTree")
+  public void inOrderTraversal(int testCaseNumber, BinarySearchTree<String> tree) {
+	  /*BinarySearchTree.add("C6");
+		BinarySearchTree.add("C3");
+		BinarySearchTree.add("C9");
+		BinarySearchTree.add("C1");
+		BinarySearchTree.add("C4");
+		BinarySearchTree.add("C7");
+		BinarySearchTree.add("CB");
+		BinarySearchTree.add("C2");
+		BinarySearchTree.add("C5");
+		BinarySearchTree.add("C8");
+		BinarySearchTree.add("CA");
+		BinarySearchTree.add("CC");*/
+	  switch(testCaseNumber) {
+	  case 0:
+		  Assert.assertEquals(true, tree.inOrderTraversal().isEmpty());
+	  	  break;
+	  case 1:
+		  Assert.assertEquals(true, Arrays.equals(tree.inOrderTraversal().toArray(new String[0])
+			, new String[]{"C1","C2","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC"}));
+		  break;
+	  }
   }
 
-  @Test
-  public void child() {
-    throw new RuntimeException("Test not implemented");
+  
+  @Test(dataProvider = "getTree")
+  public void isAncestor(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  if(testCaseNumber == 1) {
+		  Assert.assertEquals(false, tree.isAncestor(null, "C2"));
+		  try {
+			  tree.isAncestor("C6", null);
+			  Assert.assertEquals(false, true);
+		  } catch (IllegalArgumentException e) {
+			  //passed;
+		  }
+		  try {
+			  tree.isAncestor("C6", "Not present");
+			  Assert.assertEquals(false, true);
+		  } catch (NodeNotFoundException e) {
+			  //passed;
+		  }
+		  Assert.assertEquals(true, tree.isAncestor("C6", "C2"));
+		  Assert.assertEquals(true, tree.isAncestor("C3", "C2"));
+		  Assert.assertEquals(true, tree.isAncestor("C1", "C2"));
+		  Assert.assertEquals(false, tree.isAncestor("C1", "CC"));
+		  Assert.assertEquals(true, tree.isAncestor("CB", "CC"));
+		  Assert.assertEquals(true, tree.isAncestor("C9", "CC"));
+		  Assert.assertEquals(true, tree.isAncestor("C6", "CC"));
+	  }
+  }
+  
+  @Test(dataProvider = "getTree")
+  public void isDescendant(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  if(testCaseNumber == 1) {
+		  Assert.assertEquals(false, tree.isDescendant("C2", null));
+		  try {
+			  tree.isDescendant(null, "C6");
+			  Assert.assertEquals(false, true);
+		  } catch (IllegalArgumentException e) {
+			  //passed;
+		  }
+		  try {
+			  tree.isDescendant("Not present", "C6");
+			  Assert.assertEquals(false, true);
+		  } catch (NodeNotFoundException e) {
+			  //passed;
+		  }
+		  Assert.assertEquals(true, tree.isAncestor("C6", "C2"));
+		  Assert.assertEquals(true, tree.isAncestor("C3", "C2"));
+		  Assert.assertEquals(true, tree.isAncestor("C1", "C2"));
+		  Assert.assertEquals(false, tree.isAncestor("C1", "CC"));
+		  Assert.assertEquals(true, tree.isAncestor("CB", "CC"));
+		  Assert.assertEquals(true, tree.isAncestor("C9", "CC"));
+		  Assert.assertEquals(true, tree.isAncestor("C6", "CC"));
+		  
+		  Assert.assertEquals(true, tree.isAncestor("C6", "C3"));
+		  Assert.assertEquals(true, tree.isAncestor("C6", "C9"));
+	  }
   }
 
-  @Test
-  public void children() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void isEmpty(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(true, tree.isEmpty());
+	  		break;
+	  	case 1:
+	  		Assert.assertEquals(false, tree.isEmpty());
+	  		tree.remove("C1");
+	  		tree.remove("C2");
+	  		Assert.assertEquals(false, tree.isEmpty());
+	  		tree.clear();
+	  		Assert.assertEquals(true, tree.isEmpty());
+	  		break;
+	  }
+		  
   }
 
-  @Test
-  public void clear() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void leaves(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(true, tree.leaves().isEmpty());
+	  		break;
+	  	case 1:
+	  		/*BinarySearchTree.add("C6");
+			BinarySearchTree.add("C3");
+			BinarySearchTree.add("C9");
+			BinarySearchTree.add("C1");
+			BinarySearchTree.add("C4");
+			BinarySearchTree.add("C7");
+			BinarySearchTree.add("CB");
+			BinarySearchTree.add("C2");
+			BinarySearchTree.add("C5");
+			BinarySearchTree.add("C8");
+			BinarySearchTree.add("CA");
+			BinarySearchTree.add("CC");*/
+	  		Assert.assertEquals(tree.leaves().toArray(new String[0]), new String[]{"C2","C5","C8","CA","CC"});
+	  		tree.remove("C2");
+			Assert.assertEquals(true, Arrays.equals(tree.leaves().toArray(new String[0]), new String[]{"C1", "C5","C8","CA","CC"}));
+	  		break;
+	  }
+  }
+  
+  @Test(dataProvider = "getTree")
+  public void levelOrderTraversal(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(true, tree.levelOrderTraversal().isEmpty());
+	  		break;
+	  	case 1:
+	  		/*BinarySearchTree.add("C6");
+			BinarySearchTree.add("C6", "C1");
+			BinarySearchTree.add("C6", "C2");
+			BinarySearchTree.add("C1", "C1-1");
+			BinarySearchTree.add("C1", "C1-2");
+			BinarySearchTree.add("C2", "C2-1");
+			BinarySearchTree.add("C2", "C2-2");
+			BinarySearchTree.add("C1-1", "C1-1-1");
+			BinarySearchTree.add("C1-1", "C1-1-2");
+			BinarySearchTree.add("C1-2", "C1-2-1");
+			BinarySearchTree.add("C2-1", "C2-1-1");
+			BinarySearchTree.add("C2-1", "C2-1-2");*/
+	  		Assert.assertEquals(tree.levelOrderTraversal().toArray(new String[0])
+	  			, new String[]{"C6","C3","C9","C1","C4","C7","CB","C2","C5","C8","CA","CC"});
+	  		break;
+	  }
+  }
+  
+  @Test(dataProvider = "getTree")
+  public void parent(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		 try {
+	  			  tree.parent(null);
+	  			  Assert.assertEquals(false, true);
+	  		  } catch (IllegalArgumentException e) {
+	  			  //passed
+	  		  }
+	  		  try {
+	  			  tree.parent("Not present");
+	  			  Assert.assertEquals(false, true);
+	  		  } catch (NodeNotFoundException e) {
+	  			  //passed
+	  		  }
+	  		  break;
+	  	case 1:
+	  		Assert.assertEquals(tree.parent("C2"), "C1");
+	  		Assert.assertEquals(tree.parent("C1"), "C3");
+	  		Assert.assertNull(tree.parent("C6"));
+	  		break;
+	  }
   }
 
-  @Test
-  public void commonAncestor() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void postOrderTraversal(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(true, tree.postOrderTraversal().isEmpty());
+	  		break;
+	  	case 1:
+	  		/*BinarySearchTree.add("C6");
+			BinarySearchTree.add("C6", "C1");
+			BinarySearchTree.add("C6", "C2");
+			BinarySearchTree.add("C1", "C1-1");
+			BinarySearchTree.add("C1", "C1-2");
+			BinarySearchTree.add("C2", "C2-1");
+			BinarySearchTree.add("C2", "C2-2");
+			BinarySearchTree.add("C1-1", "C1-1-1");
+			BinarySearchTree.add("C1-1", "C1-1-2");
+			BinarySearchTree.add("C1-2", "C1-2-1");
+			BinarySearchTree.add("C2-1", "C2-1-1");
+			BinarySearchTree.add("C2-1", "C2-1-2");*/
+	  		Assert.assertEquals(tree.postOrderTraversal().toArray(new String[0])
+	  			, new String[]{"C2","C1","C5","C4","C3","C8","C7","CA","CC","CB","C9","C6"});
+	  		break;
+	  }
   }
 
-  @Test
-  public void contains() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void preOrderTraversal(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(true, tree.preOrderTraversal().isEmpty());
+	  		break;
+	  	case 1:
+	  		/*BinarySearchTree.add("C6");
+			BinarySearchTree.add("C6", "C1");
+			BinarySearchTree.add("C6", "C2");
+			BinarySearchTree.add("C1", "C1-1");
+			BinarySearchTree.add("C1", "C1-2");
+			BinarySearchTree.add("C2", "C2-1");
+			BinarySearchTree.add("C2", "C2-2");
+			BinarySearchTree.add("C1-1", "C1-1-1");
+			BinarySearchTree.add("C1-1", "C1-1-2");
+			BinarySearchTree.add("C1-2", "C1-2-1");
+			BinarySearchTree.add("C2-1", "C2-1-1");
+			BinarySearchTree.add("C2-1", "C2-1-2");*/
+	  		Assert.assertEquals(tree.preOrderTraversal().toArray(new String[0])
+	  			, new String[]{"C6","C3","C1","C2","C4","C5","C9","C7","C8","CB","CA","CC"});
+	  		break;
+	  }
+  }
+  @SuppressWarnings("unchecked")
+@Test(dataProvider = "getTree")
+  public void remove(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		try {
+	  		  tree.remove(null);
+	  		  Assert.assertEquals(false, true);
+	  	    } catch (IllegalArgumentException e) {
+	  		  //passed
+	  	    }
+	  		Assert.assertEquals(false, tree.remove("Not present"));
+	  		break;
+	  	case 1:
+	  		/*BinarySearchTree.add("C6");
+			BinarySearchTree.add("C6", "C1");
+			BinarySearchTree.add("C6", "C2");
+			BinarySearchTree.add("C1", "C1-1");
+			BinarySearchTree.add("C1", "C1-2");
+			BinarySearchTree.add("C2", "C2-1");
+			BinarySearchTree.add("C2", "C2-2");
+			BinarySearchTree.add("C1-1", "C1-1-1");
+			BinarySearchTree.add("C1-1", "C1-1-2");
+			BinarySearchTree.add("C1-2", "C1-2-1");
+			BinarySearchTree.add("C2-1", "C2-1-1");
+			BinarySearchTree.add("C2-1", "C2-1-2");*/
+	  		Assert.assertEquals(false, tree.remove("Not present"));
+	  		
+	  		BinarySearchTree<String> clone = (BinarySearchTree<String>) tree.clone();
+	  		Assert.assertEquals(true, clone.remove("C2"));//delet case 1
+	  		Assert.assertEquals(clone.inOrderTraversal().toArray(new String[0]), new String[]{"C1","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC"});
+	  		Assert.assertEquals(clone.preOrderTraversal().toArray(new String[0]), new String[]{"C6","C3","C1","C4","C5","C9","C7","C8","CB","CA","CC"});
+	  		
+	  		clone = (BinarySearchTree<String>) tree.clone();
+	  		Assert.assertEquals(true, clone.remove("C1"));//delete case 2
+	  		Assert.assertEquals(clone.inOrderTraversal().toArray(new String[0]), new String[]{"C2","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC"});
+	  		Assert.assertEquals(clone.preOrderTraversal().toArray(new String[0]), new String[]{"C6","C3","C2","C4","C5","C9","C7","C8","CB","CA","CC"});
+	  		
+	  		clone = (BinarySearchTree<String>) tree.clone();
+	  		Assert.assertEquals(true, clone.remove("C6"));//delete case 3
+	  		Assert.assertEquals(clone.inOrderTraversal().toArray(new String[0]), new String[]{"C1","C2","C3","C4","C5","C7","C8","C9","CA","CB","CC"});
+	  		Assert.assertEquals(clone.preOrderTraversal().toArray(new String[0]), new String[]{"C7","C3","C1","C2","C4","C5","C9","C8","CB","CA","CC"});
+	  		Assert.assertEquals(true, clone.remove("C1"));//delete twice and check
+	  		Assert.assertEquals(clone.inOrderTraversal().toArray(new String[0]), new String[]{"C2","C3","C4","C5","C7","C8","C9","CA","CB","CC"});
+	  		Assert.assertEquals(clone.preOrderTraversal().toArray(new String[0]), new String[]{"C7","C3","C2","C4","C5","C9","C8","CB","CA","CC"});
+	  		break;
+	  }
+  }
+  @Test(dataProvider = "getTree")
+  public void removeAll(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(true, tree.preOrderTraversal().isEmpty());
+	  		break;
+	  	case 1:
+	  		/*BinarySearchTree.add("C6");
+			BinarySearchTree.add("C6", "C1");
+			BinarySearchTree.add("C6", "C2");
+			BinarySearchTree.add("C1", "C1-1");
+			BinarySearchTree.add("C1", "C1-2");
+			BinarySearchTree.add("C2", "C2-1");
+			BinarySearchTree.add("C2", "C2-2");
+			BinarySearchTree.add("C1-1", "C1-1-1");
+			BinarySearchTree.add("C1-1", "C1-1-2");
+			BinarySearchTree.add("C1-2", "C1-2-1");
+			BinarySearchTree.add("C2-1", "C2-1-1");
+			BinarySearchTree.add("C2-1", "C2-1-2");*/
+	  		tree.removeAll(Arrays.asList(new String[]{}));
+	  		Assert.assertEquals(true, Arrays.equals(tree.inOrderTraversal().toArray(new String[0])
+	  				, new String[]{"C1","C2","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC"}));
+	  		tree.removeAll(Arrays.asList(new String[]{"C6","C1","C2"}));
+	  		Assert.assertEquals(tree.inOrderTraversal().toArray(new String[0]), new String[]{"C3","C4","C5","C7","C8","C9","CA","CB","CC"});
+	  		break;
+	  }
   }
 
-  @Test
-  public void containsAll() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void retainAll(int testCaseNumber, BinarySearchTree<String> tree) {
+   try {
+	   tree.retainAll(Arrays.asList(new String[]{""}));
+   } catch (UnsupportedOperationException e) {
+	   //passed
+   }
   }
 
-  @Test
-  public void depth() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void root(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(null, tree.root());
+	  		break;
+	  	case 1:
+	  		Assert.assertEquals("C6", tree.root());
+	  		break;
+	  }
   }
 
-  @Test
-  public void findParent() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void siblings(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		try {
+	  		  tree.siblings(null);
+	  		  Assert.assertEquals(false, true);
+	  	    } catch (IllegalArgumentException e) {
+	  		  //passed
+	  	    }
+	  	    try {
+	  		  tree.parent("Not present");
+	  		  Assert.assertEquals(false, true);
+	  	    } catch (NodeNotFoundException e) {
+	  		  //passed
+	  	    }
+	  		break;
+	  	case 1:
+	  		/*BinarySearchTree.add("C6");
+			BinarySearchTree.add("C6", "C1");
+			BinarySearchTree.add("C6", "C2");
+			BinarySearchTree.add("C1", "C1-1");
+			BinarySearchTree.add("C1", "C1-2");
+			BinarySearchTree.add("C2", "C2-1");
+			BinarySearchTree.add("C2", "C2-2");
+			BinarySearchTree.add("C1-1", "C1-1-1");
+			BinarySearchTree.add("C1-1", "C1-1-2");
+			BinarySearchTree.add("C1-2", "C1-2-1");
+			BinarySearchTree.add("C2-1", "C2-1-1");
+			BinarySearchTree.add("C2-1", "C2-1-2");*/
+	  		Assert.assertEquals(tree.siblings("C6").toArray(new String[0]), new String[]{});
+	  		Assert.assertEquals(tree.siblings("C3").toArray(new String[0]), new String[]{"C9"});
+	  		Assert.assertEquals(tree.siblings("C9").toArray(new String[0]), new String[]{"C3"});
+	  		break;
+	  }
   }
 
-  @Test
-  public void getCurrentList() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void size(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(0, tree.size());
+	  		break;
+	  	case 1:
+	  		Assert.assertEquals(12, tree.size());
+	  		tree.remove("C2");
+	  		Assert.assertEquals(11, tree.size());
+	  		tree.remove("C6");
+	  		Assert.assertEquals(10, tree.size());
+	  		break;
+	  }
   }
 
-  @Test
-  public void getEmptySlot() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void toArray(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(new String[]{}, tree.toArray());
+	  		break;
+	  	case 1:
+	  		Assert.assertEquals(tree.toArray(), new String[]{"C1","C2","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC"});
+	  		break;
+	  }
   }
 
-  @Test
-  public void inOrderTraversal() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void toArrayT(int testCaseNumber, BinarySearchTree<String> tree) {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		Assert.assertEquals(new String[]{}, tree.toArray(new String[0]));
+	  		break;
+	  	case 1:
+	  		Assert.assertEquals(tree.toArray(new String[0])
+	  				, new String[]{"C1","C2","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC"});
+	  		break;
+	  }
   }
-
-  @Test
-  public void inorderOrderTraversal() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void equals(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  switch(testCaseNumber) {
+	  	case 0:
+	  		BinarySearchTree<String> BinarySearchTree = new BinarySearchTree<String>();
+	  		Assert.assertEquals(true, tree.equals(BinarySearchTree));
+	  		BinarySearchTree.add("Root2");
+	  		Assert.assertEquals(false, tree.equals(BinarySearchTree));
+	  		break;
+	  	case 1:
+	  		@SuppressWarnings("unchecked")
+			BinarySearchTree<String> clone = (BinarySearchTree<String>) tree.clone();
+	  		@SuppressWarnings("unchecked")
+			BinarySearchTree<String> clone2 = (BinarySearchTree<String>) tree.clone();
+	  		Assert.assertEquals(true, tree.equals(clone));
+	  		clone.remove("C2");
+	  		Assert.assertEquals(false, tree.equals(clone));
+	  		clone2.add("CD");
+	  		Assert.assertEquals(false, tree.equals(clone2));
+	  		break;
+	  }
   }
-
-  @Test
-  public void inorderOrderTraversalintArrayListE() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void left(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  switch(testCaseNumber) {
+	  	case 1:
+	  		try {
+	  			tree.left(null);
+	  			Assert.assertEquals(false, true);
+	  		} catch(IllegalArgumentException e) {
+	  			//passed
+	  		}
+	  		try {
+	  			tree.left("not present");
+	  			Assert.assertEquals(false, true);
+	  		} catch(NodeNotFoundException e) {
+	  			//passed
+	  		}
+	  		break;
+	  	case 2:
+	  		Assert.assertEquals(tree.left("C6"), "C3");
+	  		Assert.assertEquals(tree.left("C3"), "C1");
+	  		Assert.assertNull(tree.left("C1"));
+	  		Assert.assertNull(tree.left("C2"));
+	  		break;
+	  }
   }
-
-  @Test
-  public void isAncestor() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void isDescendant() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void isEmpty() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void iterator() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void leaves() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void left() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void levelOrderTraversal() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void levelOrderTraversalArrayListELinkedListInteger() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void parent() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void postOrderTraversal() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void preOrderTraversal() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void remove() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void removeAll() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void retainAll() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void right() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void root() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void siblings() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void size() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void successor() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void toArray() {
-    throw new RuntimeException("Test not implemented");
-  }
-
-  @Test
-  public void toArrayT() {
-    throw new RuntimeException("Test not implemented");
+  @Test(dataProvider = "getTree")
+  public void right(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
+	  switch(testCaseNumber) {
+	  	case 1:
+	  		try {
+	  			tree.right(null);
+	  			Assert.assertEquals(false, true);
+	  		} catch(IllegalArgumentException e) {
+	  			//passed
+	  		}
+	  		try {
+	  			tree.right("not present");
+	  			Assert.assertEquals(false, true);
+	  		} catch(NodeNotFoundException e) {
+	  			//passed
+	  		}
+	  		break;
+	  	case 2:
+	  		Assert.assertEquals(tree.right("C6"), "C9");
+	  		Assert.assertEquals(tree.right("C3"), "C4");
+	  		Assert.assertNull(tree.right("C7"));
+	  		Assert.assertNull(tree.right("C2"));
+	  		break;
+	  }
   }
 }
