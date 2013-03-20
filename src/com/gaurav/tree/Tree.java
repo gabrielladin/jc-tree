@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Gaurav Saxena
+ * Copyright 2013 Gaurav Saxena
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -33,6 +33,7 @@ import java.util.Collection;
  */
 public interface Tree<E> extends Collection<E>{
 	/**
+	 * 
 	 * In case an equal object is already present in the tree then the method returns false and the original 
 	 * object is replaced. 
 	 * @param parent object to which child object needs to be added. Parent is allowed to be null
@@ -40,6 +41,7 @@ public interface Tree<E> extends Collection<E>{
 	 * @param child object 
 	 * @return true if parent was found and child is not already in the tree, otherwise false
 	 * @throws NodeNotFoundException if parent is not found
+	 * @deprecated Not all trees can add any child to any parent e.g. BST
 	 */
 	public boolean add(E parent, E child) throws NodeNotFoundException;
 	/**
@@ -49,6 +51,7 @@ public interface Tree<E> extends Collection<E>{
 	 * @param c collection of children to be added to parent
 	 * @return true if collection changed as a result of the operation, otherwise false
 	 * @throws NodeNotFoundException 
+	 * @deprecated Not all trees can add any child to any parent e.g. BST
 	 */
 	public boolean addAll(E parent, Collection<? extends E> c) throws NodeNotFoundException;
 	/**

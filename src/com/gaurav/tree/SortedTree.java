@@ -13,16 +13,15 @@
  */
 package com.gaurav.tree;
 
-import java.util.Collections;
-import java.util.List;
+/**
+ * Trees of this type keep nodes sorted e.g. BST etc.
+ * @author Gaurav Saxena
+ * @param <E>
+ */
+public interface SortedTree<E extends Comparable<E>> extends Tree<E> {
 
-public class SortedChildrenTree<E extends Comparable<E>> extends ArrayListTree<E> {
-	/**
-	 * This adds the child at a insertion position defined by {@link Collections#binarySearch(List, Object)}
-	 * @see com.gaurav.tree.ArrayListTree#getChildAddPosition(java.util.List, java.lang.Object)
-	 */
-	@Override
-	protected int getChildAddPosition(List<E> children, E newChild) {
-		return -Collections.binarySearch(children, newChild) - 1;
-	}
+	E successor(E node) throws NodeNotFoundException;
+
+	E predecessor(E node) throws NodeNotFoundException;
+
 }

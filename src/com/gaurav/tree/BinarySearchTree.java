@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Gaurav Saxena
+ * Copyright 2013 Gaurav Saxena
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @param <E>
  */
-public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E>, Cloneable {
+public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>, Cloneable {
 	private ArrayList<E> nodeList = new ArrayList<E>();
 	private ArrayList<Integer> parentList = new ArrayList<Integer>();
 	private ArrayList<int[]> childrenArray = new ArrayList<int[]>();
@@ -47,15 +47,6 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 	public boolean add(E parent, E child) throws NodeNotFoundException
 	{
 		throw new UnsupportedOperationException("A binary search tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use add(child)");
-	}
-	/**
-	 * A binary search tree determines parent of a child on its own and hence it is not possible to add the child to any given parent or index. Please use add(child).
-	 * The method throws {@link UnsupportedOperationException}
-	 */
-	@Override
-	public boolean add(E parent, E child, int index) throws NodeNotFoundException
-	{
-		throw new UnsupportedOperationException("A binary search tree determines parent of a child on its own and hence it is not possible to add the child to any given parent or index. Please use add(child)");
 	}
 	/**
 	 * If tree is empty, it adds a root. In case tree is not empty, it will attempt to add parameter as a child of the root 
@@ -150,8 +141,7 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 			return false;
 		}
 	}
-	@Override
-	public E child(E parent, int index) throws NodeNotFoundException {
+	private E child(E parent, int index) throws NodeNotFoundException {
 		checkNode(parent);
 		int parentIndex = nodeList.indexOf(parent);
 		int childIndex;
@@ -345,13 +335,18 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 		else
 			return preOrderTraversal(rootIndex, new ArrayList<E>());
 	}
+	/**
+	 * Deletes node as mentioned in <a href="http://en.wikipedia.org/wiki/Binary_search_tree#Deletion">BST</a>.
+	 * Randomizes node to replace (predecessor / successor) when deleting an inner node. This helps keep tree balanced
+	 * @see java.util.Collection#remove(java.lang.Object)
+	 */
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean remove(Object o) {
 		checkNode((E)o);
-		int index = nodeList.indexOf((E)o);
+		int index = nodeList.indexOf(o);
 		if(index > -1) {
-			try {//http://en.wikipedia.org/wiki/Binary_search_tree#Deletion
+			try {
 				List<E> children = children((E) o);
 				if(children.isEmpty())
 					deleteCase1(index);
@@ -369,10 +364,14 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 	}
 	@SuppressWarnings("unchecked")
 	private void deleteCase3(int index, Object o) throws NodeNotFoundException {
-		E successor = successor((E)o);
-		int successorIndexOf = nodeList.indexOf(successor);
-		nodeList.set(index, successor);
-		nodeList.set(successorIndexOf, (E) o);
+		E nodeToReplace;
+		if(Math.random() > 0.5)
+			nodeToReplace = successor((E)o);
+		else
+			nodeToReplace = predecessor((E)o);
+		int nodeToReplaceIndex = nodeList.indexOf(nodeToReplace);
+		nodeList.set(index, nodeToReplace);
+		nodeList.set(nodeToReplaceIndex, (E) o);
 		remove(o);
 	}
 	private void deleteCase2(int index) {
@@ -406,7 +405,8 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 		parentList.set(index, -1);
 		depth = recalculateDepth(rootIndex, 0);
 	}
-	private E successor(E node) throws NodeNotFoundException {
+	@Override
+	public E successor(E node) throws NodeNotFoundException {
 		E right = right(node);
 		if(right != null) {
 			node = right;
@@ -415,6 +415,20 @@ public class BinarySearchTree<E extends Comparable<E>> implements NumberedTree<E
 			return node;
 		} else {
 			while(!right(parent(node)).equals(node))
+				node = parent(node);
+			return node;
+		}
+	}
+	@Override
+	public E predecessor(E node) throws NodeNotFoundException {
+		E left = left(node);
+		if(left != null) {
+			node = left;
+			while(right(node) != null)
+				node = right(node);
+			return node;
+		} else {
+			while(!left(parent(node)).equals(node))
 				node = parent(node);
 			return node;
 		}

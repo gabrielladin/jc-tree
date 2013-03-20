@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Gaurav Saxena
+ * Copyright 2013 Gaurav Saxena
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -82,7 +82,7 @@ public class LinkedTree<E> implements Tree<E>, Cloneable{
 		} else
 			throw new NodeNotFoundException("No node was found for parent object");
 	}
-	private Entry<E> getNode(E node) {
+	private Entry<E> getNode(Object node) {
 		if(!isEmpty()) {
 			LinkedList<Entry<E>> queue = new LinkedList<Entry<E>>();
 			queue.add(root);
@@ -313,7 +313,7 @@ public class LinkedTree<E> implements Tree<E>, Cloneable{
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean remove(Object o) {
-		checkNode((E)o);
+		checkNode(o);
 		Entry<E> node = getNode((E) o);
 		if(node != null) {
 			boolean isRemoved; 
@@ -387,7 +387,7 @@ public class LinkedTree<E> implements Tree<E>, Cloneable{
 		return getCurrentList().toArray(a);
 	}
 
-	private void checkNode(E child) {
+	private void checkNode(Object child) {
 		if(child == null)
 			throw new IllegalArgumentException("null nodes are not allowed");
 	}

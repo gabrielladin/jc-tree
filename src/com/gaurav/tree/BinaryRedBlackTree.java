@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Gaurav Saxena
+ * Copyright 2013 Gaurav Saxena
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @param <E>
  */
-public class BinaryRedBlackTree<E extends Comparable<E>> implements NumberedTree<E>, Cloneable {
+public class BinaryRedBlackTree<E extends Comparable<E>> implements Tree<E>, Cloneable {
 	private ArrayList<E> nodeList = new ArrayList<E>();
 	private ArrayList<Integer> parentList = new ArrayList<Integer>();
 	private ArrayList<int[]> childrenArray = new ArrayList<int[]>();
@@ -199,8 +199,8 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements NumberedTree
 		return null;
 	}
 	/**
-	 * Adds child at the first available slot in the children array. 
-	 * If none of the slots are available it throws exception
+	 * Unsupported Operation
+	 * A red-black tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use {@link #add(Comparable)})
 	 * @see com.gaurav.tree.Tree#add(java.lang.Object, java.lang.Object)
 	 **/
 	@Override
@@ -217,17 +217,10 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements NumberedTree
 		} else
 			return false;
 	}
-
-	@Override
-	public boolean add(E parent, E child, int index) throws NodeNotFoundException {
-		throw new UnsupportedOperationException("A red-black tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use add(child)");
-	}
-
 	private void checkIndex(int index) {
 		if(index < 0 || index > maxChildren - 1)
 			throw new IndexOutOfBoundsException("index found to be " + index + ".It should be between 0 and " + (maxChildren - 1));
 	}
-
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
 		boolean retVal = false;
@@ -245,8 +238,7 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements NumberedTree
 			return false;
 		}
 	}
-	@Override
-	public E child(E parent, int index) throws NodeNotFoundException {
+	private E child(E parent, int index) throws NodeNotFoundException {
 		checkNode(parent);
 		int parentIndex = nodeList.indexOf(parent);
 		int childIndex;

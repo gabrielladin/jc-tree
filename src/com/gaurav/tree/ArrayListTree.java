@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Gaurav Saxena
+ * Copyright 2013 Gaurav Saxena
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -304,10 +304,9 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable{
 	 * Removes the sub-tree rooted at the node passed
 	 * @see java.util.Collection#remove(java.lang.Object)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean remove(Object o) {
-		checkNode((E)o);
+		checkNode(o);
 		int i = nodeList.indexOf(o);
 		if(i > -1) {
 			boolean wasRemoved;

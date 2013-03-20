@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Gaurav Saxena
+ * Copyright 2013 Gaurav Saxena
  * 
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -330,10 +330,9 @@ public class ArrayTree<E> implements NumberedTree<E>, Cloneable {
 		else
 			return preOrderTraversal(rootIndex, new ArrayList<E>());
 	}
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean remove(Object o) {
-		checkNode((E)o);
+		checkNode(o);
 		int i = nodeList.indexOf(o);
 		if(i > -1) {
 			boolean wasRemoved;
@@ -420,7 +419,7 @@ public class ArrayTree<E> implements NumberedTree<E>, Cloneable {
 		depth++;
 	}
 
-	private void checkNode(E child) {
+	private void checkNode(Object child) {
 		if(child == null)
 			throw new IllegalArgumentException("null nodes are not allowed");
 	}
