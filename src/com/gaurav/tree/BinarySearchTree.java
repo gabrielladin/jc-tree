@@ -353,7 +353,7 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 				else if(children.size() == 1)
 					deleteCase2(index);
 				else
-					deleteCase3(index, o);
+					deleteCase3(index, (E) o);
 				return true;
 			} catch (NodeNotFoundException e) {
 				e.printStackTrace();//Not expected as we have already checked for presence in tree
@@ -362,16 +362,15 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 		}
 		return false;
 	}
-	@SuppressWarnings("unchecked")
-	private void deleteCase3(int index, Object o) throws NodeNotFoundException {
+	private void deleteCase3(int index, E o) throws NodeNotFoundException {
 		E nodeToReplace;
 		if(Math.random() > 0.5)
-			nodeToReplace = successor((E)o);
+			nodeToReplace = successor(o);
 		else
-			nodeToReplace = predecessor((E)o);
+			nodeToReplace = predecessor(o);
 		int nodeToReplaceIndex = nodeList.indexOf(nodeToReplace);
 		nodeList.set(index, nodeToReplace);
-		nodeList.set(nodeToReplaceIndex, (E) o);
+		nodeList.set(nodeToReplaceIndex, o);
 		remove(o);
 	}
 	private void deleteCase2(int index) {
