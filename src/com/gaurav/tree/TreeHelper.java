@@ -64,4 +64,34 @@ class TreeHelper {
 		} else
 			throw new NodeNotFoundException("parent node not found in the tree");
 	}
+	public <E> E commonAncestor(Tree<E> tree, E node1, E node2) throws NodeNotFoundException {
+		int height1 = 0;
+		E e1 = node1; 
+		while(e1 != null) {
+			height1++;
+			e1 = tree.parent(e1);
+		}
+		int height2 = 0;
+		E e2 = node2; 
+		while(e2 != null) {
+			height2++;
+			e2 = tree.parent(e2);
+		}
+		if(height1 > height2) {
+			while(height1 - height2 > 0) {
+				node1 = tree.parent(node1);
+				height1--;
+			}
+		} else {
+			while(height2 - height1 > 0) {
+				node2 = tree.parent(node2);
+				height2--;
+			}
+		}
+		while(node1 != null && !node1.equals(node2)) {
+			node1 = tree.parent(node1);
+			node2 = tree.parent(node2);
+		}
+		return node1;
+	}
 }

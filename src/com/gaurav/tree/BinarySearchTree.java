@@ -21,12 +21,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * The nodes in this class always have a particular number of children. It is not possible to add more children 
- * than the number provided in the constructor. Since the children are numbered, it is possible to access them
- * by index. This class serves as a base class to trees which are used to keep order among its elements e.g. BST
+ * Traditional BST. The implementation is using arraylists which have to be traversed completely to find a node. As a result this implementation doesn't give traditional
+ * log(n) operation time. {@link LinkedBinarySearchTree} implementation is based on tradition left-right-parent links
  * 
- * add(parent, child) adds child to the first available slot. Thus, it is better to add nodes using 
- * add(parent, child, index)
  * @author Gaurav Saxena
  *
  * @param <E>

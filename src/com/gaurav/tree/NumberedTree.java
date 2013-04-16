@@ -25,6 +25,7 @@ public interface NumberedTree<E> extends Tree<E>{
 	/**
 	 * Adds a child to a parent at a particular index
 	 * If another object is present at child index then that is replaced with the new one
+	 * Implementations which number children according to their own logic may throw {@link UnsupportedOperationException}
 	 * @param parent object to which child object needs to be added. Parent is allowed to be null
 	 * only when there are no other nodes present in the tree. In that case, the child will be added as root
 	 * @param child object 
