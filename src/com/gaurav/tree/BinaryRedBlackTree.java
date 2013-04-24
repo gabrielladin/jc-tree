@@ -486,7 +486,7 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 				if(children.size() == 2)
 					deferDelete(index, (E)o);
 				else
-					deleteCase0(index, (E)o);
+					deleteCaseLeaf(index, (E)o);
 				return true;
 			} catch (NodeNotFoundException e) {
 				e.printStackTrace();//Not expected as we have already checked for presence in tree
@@ -495,23 +495,113 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		}
 		return false;
 	}
-	//Assuming there is only one non-leaf children attached to o
-	private void deleteCase0(int index, E o) throws NodeNotFoundException {
+	private void deleteCaseLeaf(int index, E o) throws NodeNotFoundException {
 		E parent = parent(o);
 		E child = left(parent);
 		if(child == null)
 			child = right(parent);
+		if(child == null) {
+			colorList.set(index, null);
+			nodeList.set(index, null);
+		} else
+			deleteCaseRedNode(index, o, child);
+	}
+	private void deleteCaseRedNode(int index, E o, E child) throws NodeNotFoundException {
+		if(colorList.get(index).equals(COLOR.RED)) {
+			int indexOfChild = nodeList.indexOf(child);
+			colorList.set(index, colorList.get(indexOfChild));
+			colorList.set(indexOfChild, null);
+			nodeList.set(index, nodeList.get(indexOfChild));
+			nodeList.set(indexOfChild, null);
+		} else
+			deleteCase0(index, o, child);
+	}
+	//Assuming there is only one non-leaf children attached to o
+	private void deleteCase0(int index, E o, E child) throws NodeNotFoundException {
 		if(colorList.get(index) == COLOR.BLACK) {
-			if(child != null) {
-				int indexOfChild = nodeList.indexOf(child);
-				if(colorList.get(indexOfChild) == COLOR.RED)
-					colorList.set(indexOfChild, COLOR.BLACK);
-				else
-					deletCase1();
-			} else
-				deleteCase1();
+			int indexOfChild = nodeList.indexOf(child);
+			if(colorList.get(indexOfChild) == COLOR.RED) {
+				//colorList.set(index, COLOR.BLACK);
+				colorList.set(indexOfChild, null);
+				nodeList.set(index, nodeList.get(indexOfChild));
+				nodeList.set(indexOfChild, null);
+			} else {
+				nodeList.set(index, nodeList.get(indexOfChild));
+				nodeList.set(indexOfChild, null);
+				deleteCase1(child);
+			}
 		}
 			
+	}
+	private void deleteCase1(E child) throws NodeNotFoundException {
+		if(!child.equals(nodeList.get(rootIndex)))
+			deleteCase2(child);
+	}
+	private void deleteCase2(E child) throws NodeNotFoundException {
+		E sibling = siblings(child).get(0);
+		int siblingIndex = nodeList.indexOf(sibling);
+		int parentIndex = nodeList.indexOf(parent(child));
+		if(colorList.get(siblingIndex) == COLOR.RED) {
+			
+			colorList.set(parentIndex, COLOR.RED);
+			colorList.set(siblingIndex, COLOR.BLACK);
+			if(child.equals(left(nodeList.get(parentIndex))))
+				rotateLeft(nodeList.get(parentIndex));
+			else
+				rotateRight(nodeList.get(parentIndex));
+		} else
+			deleteCase3(child, siblingIndex, parentIndex);
+	}
+	private void deleteCase3(E child, int siblingIndex, int parentIndex) throws NodeNotFoundException {
+		E left = left(nodeList.get(siblingIndex));
+		E right = right(nodeList.get(siblingIndex));
+		if(colorList.get(parentIndex) == COLOR.BLACK &&
+				colorList.get(siblingIndex) == COLOR.BLACK &&
+				(left == null || colorList.get(nodeList.indexOf(left)) == COLOR.BLACK) &&
+				(right == null || colorList.get(nodeList.indexOf(right)) == COLOR.BLACK)) {
+			colorList.set(siblingIndex, COLOR.RED);
+			deleteCase1(nodeList.get(parentIndex));
+		} else
+			deleteCase4(child, siblingIndex, parentIndex, left, right);
+	}
+	private void deleteCase4(E child, int siblingIndex, int parentIndex, E left, E right) throws NodeNotFoundException {
+		if(colorList.get(parentIndex) == COLOR.RED &&
+				colorList.get(siblingIndex) == COLOR.BLACK &&
+				(left == null || colorList.get(nodeList.indexOf(left)) == COLOR.BLACK) &&
+				(right == null || colorList.get(nodeList.indexOf(right)) == COLOR.BLACK)) {
+			colorList.set(siblingIndex, COLOR.RED);
+			colorList.set(parentIndex, COLOR.BLACK);
+		} else
+			deleteCase5(child, siblingIndex, parentIndex, left, right);
+	}
+	private void deleteCase5(E child, int siblingIndex, int parentIndex, E left, E right) throws NodeNotFoundException {
+		if(colorList.get(siblingIndex) == COLOR.BLACK) {
+			if(left(nodeList.get(parentIndex)).equals(child) &&
+					(colorList.get(nodeList.indexOf(left)) == COLOR.RED) &&
+					(right == null || colorList.get(nodeList.indexOf(right)) == COLOR.BLACK)) {
+				colorList.set(siblingIndex, COLOR.RED);
+				colorList.set(nodeList.indexOf(left), COLOR.BLACK);
+				rotateRight(nodeList.get(siblingIndex));
+			} else if(right(nodeList.get(parentIndex)).equals(child) &&
+					(left == null || colorList.get(nodeList.indexOf(left)) == COLOR.BLACK) &&
+					(colorList.get(nodeList.indexOf(right)) == COLOR.RED)) {
+				colorList.set(siblingIndex, COLOR.RED);
+				colorList.set(nodeList.indexOf(right), COLOR.BLACK);
+				rotateLeft(nodeList.get(siblingIndex));
+			}
+		}
+		deleteCase6(child, siblingIndex, parentIndex, left, right);
+	}
+	private void deleteCase6(E child, int siblingIndex, int parentIndex, E left, E right) throws NodeNotFoundException {
+		colorList.set(siblingIndex, colorList.get(parentIndex));
+		colorList.set(parentIndex, COLOR.BLACK);
+		if(child.equals(left(nodeList.get(parentIndex)))) {
+			colorList.set(nodeList.indexOf(right), COLOR.BLACK);
+			rotateLeft(nodeList.get(parentIndex));
+		} else {
+			colorList.set(nodeList.indexOf(left), COLOR.BLACK);
+			rotateRight(nodeList.get(parentIndex));
+		}
 	}
 	private void deferDelete(int index, E o) throws NodeNotFoundException {
 		E nodeToReplace;
@@ -519,10 +609,8 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 			nodeToReplace = successor((E)o);
 		else
 			nodeToReplace = predecessor((E)o);
-		int nodeToReplaceIndex = nodeList.indexOf(nodeToReplace);
 		nodeList.set(index, nodeToReplace);
-		nodeList.set(nodeToReplaceIndex, (E) o);
-		remove(o);
+		remove(nodeToReplace);
 	}
 	@Override
 	public boolean removeAll(Collection<?> c) {
@@ -552,8 +640,7 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 			List<E> children = children(parent);
 			children.remove(e);
 			return children;
-		}
-		else
+		} else
 			return new ArrayList<E>();
 	}
 	@Override
@@ -652,31 +739,6 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 			if(i > -1)
 				preOrderTraversal(i, list);
 		return list;
-	}
-	private boolean remove(int index) {
-		if(index > -1) {
-			if(index == rootIndex) {
-				rootIndex = -1;
-				size = 0;
-				nodeList.clear();
-				parentList.clear();
-				childrenArray.clear();
-				return true;
-			} else {
-				Integer parentIndex = parentList.set(index, -1);
-				for(int i = 0; i < childrenArray.get(parentIndex).length; i++)
-					if(childrenArray.get(parentIndex)[i] == index)
-						childrenArray.get(parentIndex)[i] = -1;
-				nodeList.set(index, null);
-				size--;
-				int[] children = childrenArray.get(index);
-				for (int j = 0; j < children.length; j++) 
-					remove(children[j]);
-				Arrays.fill(childrenArray.get(index), -1);
-				return true;
-			} 
-		} else
-			return false;
 	}
 	private int recalculateDepth(int index, int depth) {
 		int childDepth = depth + 1;
