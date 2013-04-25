@@ -20,6 +20,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.gaurav.tree.LinkedBinarySearchTree.Node;
+
 /**
  * The nodes in this class always have a particular number of children. It is not possible to add more children 
  * than the number provided in the constructor. Since the children are numbered, it is possible to access them
@@ -32,15 +34,15 @@ import java.util.List;
  * @param <E>
  */
 public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E>, Cloneable {
-	private ArrayList<E> nodeList = new ArrayList<E>();
-	private ArrayList<Integer> parentList = new ArrayList<Integer>();
-	private ArrayList<int[]> childrenArray = new ArrayList<int[]>();
+	class Node {
+		Node parent, left, right;
+		E value;
+		COLOR color;
+	}
 	private enum COLOR {RED, BLACK};
-	private ArrayList<COLOR> colorList = new ArrayList<COLOR>();
 	private int size = 0;
 	private int depth = 0;
-	private int maxChildren = 2;
-	private int rootIndex = -1;
+	private Node root;
 	
 	@Override
 	public boolean add(E child) {
@@ -62,16 +64,45 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		checkIndex(childIndex);
 		if(isRootElementBeingAdded(parent, child))//case 1
 			return true;
-		int	parentIndex = nodeList.indexOf(parent);
-		if(parentIndex > -1) {
-			if(nodeList.indexOf(child) == -1) {
-				addChild(child, parentIndex, childIndex);
-				mendTree(parentIndex, parent, childIndex, child);
-				return true;
-			} else
-				return false;
+		Node parentNode = findParent(root, child);
+		if(parentNode != null) {
+			addChild(parentNode, child);
+			mendTree(parentIndex, parent, childIndex, child);
+			return true;
 		} else
 			throw new NodeNotFoundException("No node was found for parent object");
+	}
+	private Node node(Node parent, Comparable<E> child) throws NodeNotFoundException {
+		if(child.compareTo(parent.value) > 0) {
+			Node right = parent.right;
+			if(right != null)
+				return node(right, child);
+			else
+				throw new NodeNotFoundException("No node was found for object");
+		} else if(child.compareTo(parent.value) < 0) {
+			Node left = parent.left;
+			if(left != null)
+				return node(left, child);
+			else
+				throw new NodeNotFoundException("No node was found for object");
+		} else
+			return parent;
+	}
+	private Node findParent(Node parent, E child) throws NodeNotFoundException {
+		if(child.compareTo(parent.value) > 0) {
+			Node right = parent.right;
+			if(right != null)
+				return findParent(right, child);
+			else
+				return parent;
+		} else if(child.compareTo(parent.value) < 0) {
+			Node left = parent.left;
+			if(left != null)
+				return findParent(left, child);
+			else
+				return parent;
+		} else
+			return null;//Such a node already exists
 	}
 	private void putColor(int index, COLOR c) {
 		colorList.remove(index);
@@ -656,30 +687,26 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		return getCurrentList().toArray(a);
 	}
 
-	private void addChild(E child, int parentIndex, int childIndex) {
-		nodeList.add(child);
-		colorList.add(COLOR.RED);
-		parentList.add(parentIndex);
-		childrenArray.get(parentIndex)[childIndex] = nodeList.size() - 1;
-		int[] children = new int[maxChildren];
-		Arrays.fill(children, -1);
-		childrenArray.add(children);
+	private void addChild(Node parentNode, E child) {
+		Node node = new Node();
+		node.parent = parentNode;
+		node.color = COLOR.RED;
+		if(parentNode.value.compareTo(child) > 0)
+			parentNode.right = child;
+		else
+			parentNode.left = child;
 		size++;
 		int currentDepth = 2;
-		while(parentIndex != 0)	{
-			parentIndex = parentList.get(parentIndex);
+		while(parentNode != null)	{
+			parentNode = parentNode.parent;
 			currentDepth++;
 		}
 		depth = Math.max(currentDepth, depth);
 	}
 	private void addRoot(E child) {
-		nodeList.add(child);
-		colorList.add(COLOR.BLACK);
-		rootIndex = nodeList.size() - 1;
-		parentList.add(-1);
-		int[] children = new int[maxChildren];
-		Arrays.fill(children, -1);
-		childrenArray.add(children);
+		root = new Node();
+		root.value = child;
+		root.color = COLOR.BLACK;
 		size++;
 		depth++;
 	}
