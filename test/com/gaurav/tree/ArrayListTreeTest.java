@@ -137,12 +137,7 @@ public class ArrayListTreeTest {
 
   @Test(dataProvider = "getTree")
   public void containsAll(int testCaseNumber, ArrayListTree<String> tree) {
-	  try {
-		  tree.containsAll(Arrays.asList(new String[]{null}));
-		  Assert.assertEquals(false, true);
-	  } catch (IllegalArgumentException e) {
-		  //passed
-	  }
+	  Assert.assertEquals(false, tree.containsAll(Arrays.asList(new String[]{null})));
 	  Assert.assertEquals(false, tree.containsAll(Arrays.asList(new String[]{"Not Present"})));
 	  Assert.assertEquals(true, tree.containsAll(tree.inOrderTraversal())); 
   }

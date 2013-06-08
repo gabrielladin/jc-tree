@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @param <E>
  */
-public class ArrayListTree<E> implements Tree<E>, Cloneable{
+public class ArrayListTree<E> implements Tree<E>, Cloneable {
 	private ArrayList<E> nodeList = new ArrayList<E>();
 	private ArrayList<Integer> parentList = new ArrayList<Integer>();
 	private ArrayList<ArrayList<Integer>> childrenList = new ArrayList<ArrayList<Integer>>();
@@ -201,8 +201,6 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable{
 	}
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		for(Object i : c)
-			checkNode(i);
 		return nodeList.containsAll(c);
 	}
 	@Override
@@ -468,20 +466,4 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable{
 		} else
 			return false;
 	}
-	/*private boolean isEqual(ArrayListTree<E> o, E thisNode, E testNode) throws NodeNotFoundException {
-		if((thisNode == null && testNode == null))
-			return true;
-		else if(thisNode != null && testNode != null && thisNode.equals(testNode)) {
-			List<E> testChildren = o.children(testNode);
-			List<E> children = children(thisNode);
-			if(testChildren.equals(children)) {
-				for(int i = 0; i < testChildren.size(); i++)
-					if(!isEqual(o, children.get(i), testChildren.get(i)))
-						return false;
-				return true;
-			} else
-				return false;
-		} else
-			return false;
-	}*/
 }

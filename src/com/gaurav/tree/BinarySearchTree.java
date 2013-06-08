@@ -14,35 +14,33 @@
 package com.gaurav.tree;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Traditional BST. The implementation is using arraylists which have to be traversed completely to find a node. As a result this implementation doesn't give traditional
- * log(n) operation time. {@link LinkedBinarySearchTree} implementation is based on tradition left-right-parent links
- * 
+ * Implements traditional BST as left-right-parent links of a node. This gives log(n) complexity for operations unlike {@link ArrayListBinarySearchTree}.
  * @author Gaurav Saxena
  *
  * @param <E>
  */
 public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>, Cloneable {
-	private ArrayList<E> nodeList = new ArrayList<E>();
-	private ArrayList<Integer> parentList = new ArrayList<Integer>();
-	private ArrayList<int[]> childrenArray = new ArrayList<int[]>();
+	private class Node {
+		Node parent,
+		left,
+		right;
+		E value;
+	}
 	private int size = 0;
 	private int depth = 0;
-	private final int MAX_CHILDREN = 2;
-	private int rootIndex = -1;
+	private Node root;
 	/** 
 	 * A binary search tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use add(child)
 	 * The method throws {@link UnsupportedOperationException}
 	 */
 	@Override
-	public boolean add(E parent, E child) throws NodeNotFoundException
-	{
+	public boolean add(E parent, E child) throws NodeNotFoundException {
 		throw new UnsupportedOperationException("A binary search tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use add(child)");
 	}
 	/**
@@ -52,73 +50,34 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 	@Override
 	public boolean add(E child) {
 		try {
-			if(size() == 0)
-				return addChild(null, child);
-			else {
-				E parent = findParent(root(), child);
-				return addChild(parent, child, parent.compareTo(child) > 0 ? 0 : 1);
+			if(size == 0) {
+				addRoot(child);
+				return true;
+			} else {
+				Node parent = findParent(root, child);
+				if(parent != null) {
+					addChild(parent, child, parent.value.compareTo(child) > 0);
+					return true;
+				} else
+					return false;
 			}
 		} catch (NodeNotFoundException e) {
 			e.printStackTrace();
-		}
-		return false;
-	}
-	/**
-	 * Adds child at the first available slot in the children array. 
-	 * If none of the slots are available it throws exception
-	 * @see com.gaurav.tree.Tree#add(java.lang.Object, java.lang.Object)
-	 **/
-	private boolean addChild(E parent, E child) throws NodeNotFoundException {
-		checkNode(child);
-		if(isRootElementBeingAdded(parent, child))
-			return true;
-		int	parentIndex = nodeList.indexOf(parent);
-		if(parentIndex > -1) {
-			int childIndex = nodeList.indexOf(child);
-			int emptySlot;
-			if(childIndex == -1) {
-				if((emptySlot = getEmptySlot(childrenArray.get(parentIndex))) > -1) {
-					addChild(child, parentIndex, emptySlot);
-					return true;
-				} else
-					throw new IndexOutOfBoundsException("Children array of parent is already full");
-			} else {
-				nodeList.set(childIndex, child);
-				return false;
-			}
-		} else
-			throw new NodeNotFoundException("No node was found for parent object");
-	}
-	private boolean isRootElementBeingAdded(E parent, E child) {
-		if(parent == null) {
-			if(isEmpty()) {
-				addRoot(child);
-				return true;
-			} else
-				throw new IllegalArgumentException("parent cannot be null except for root element");
-		} else
 			return false;
+		}
 	}
 
-	private boolean addChild(E parent, E child, int index) throws NodeNotFoundException {
+	private void addChild(Node parent, E child, boolean isLeft) throws NodeNotFoundException {
 		checkNode(child);
-		checkIndex(index);
-		if(isRootElementBeingAdded(parent, child))
-			return true;
-		int	parentIndex = nodeList.indexOf(parent);
-		if(parentIndex > -1) {
-			if(nodeList.indexOf(child) == -1) {
-				addChild(child, parentIndex, index);
-				return true;
-			} else
-				return false;
-		} else
-			throw new NodeNotFoundException("No node was found for parent object");
-	}
-
-	private void checkIndex(int index) {
-		if(index < 0 || index > MAX_CHILDREN - 1)
-			throw new IndexOutOfBoundsException("index found to be " + index + ".It should be between 0 and " + (MAX_CHILDREN - 1));
+		Node childNode = new Node();
+		childNode.value = child;
+		childNode.parent = parent;
+		if(isLeft)
+			parent.left = childNode;
+		else
+			parent.right = childNode;
+		size++;
+		depth = recalculateDepth(root, 0);
 	}
 
 	@Override
@@ -138,106 +97,98 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 			return false;
 		}
 	}
-	private E child(E parent, int index) throws NodeNotFoundException {
-		checkNode(parent);
-		int parentIndex = nodeList.indexOf(parent);
-		int childIndex;
-		if(parentIndex > -1) {
-			if((childIndex = childrenArray.get(parentIndex)[index]) > -1)
-				return nodeList.get(childIndex);
+	private Node node(Node parent, Comparable<E> child) throws NodeNotFoundException {
+		if(child.compareTo(parent.value) > 0) {
+			Node right = parent.right;
+			if(right != null)
+				return node(right, child);
 			else
-				return null;
+				throw new NodeNotFoundException("No node was found for object");
+		} else if(child.compareTo(parent.value) < 0) {
+			Node left = parent.left;
+			if(left != null)
+				return node(left, child);
+			else
+				throw new NodeNotFoundException("No node was found for object");
 		} else
-			throw new NodeNotFoundException("No node was found for object");
+			return parent;
 	}
 	@Override
 	public List<E> children(E e) throws NodeNotFoundException {
 		checkNode(e);
-		int index = nodeList.indexOf(e);
-		if(index > -1) {
-			ArrayList<E> children = new ArrayList<E>();
-			for (int i = 0; i < childrenArray.get(index).length; i++)
-				if(childrenArray.get(index)[i] > -1)
-					children.add(nodeList.get(childrenArray.get(index)[i]));
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for the parameter");
+		else {
+			ArrayList<E> children = new ArrayList<E>(2);
+			Node node = node(root, e);
+			if(node.left != null)
+				children.add(node.left.value);
+			if(node.right != null)
+				children.add(node.right.value);
 			return children;
-		} else
-			throw new NodeNotFoundException("No node was found for object");
+		}
 	}
 	@Override
 	public void clear() {
-		nodeList.clear();
-		parentList.clear();
-		childrenArray.clear();
+		root = null;
 		size = 0;
 		depth = 0;
-		rootIndex = -1;
 	}
 	@Override
 	@SuppressWarnings("unchecked")
 	public Object clone() {
-		BinarySearchTree<E> v = null;
+		BinarySearchTree<E> clone = null;
 		try {
-			v = (BinarySearchTree<E>) super.clone();
-			v.nodeList = (ArrayList<E>) nodeList.clone();
-			v.parentList = (ArrayList<Integer>) parentList.clone();
-			v.childrenArray = new ArrayList<int[]>();
-			v.size = this.size;
-			v.depth = this.depth;
-			for(int i = 0; i < childrenArray.size(); i++)
-				v.childrenArray.add(Arrays.copyOf(childrenArray.get(i), childrenArray.get(i).length));
+			clone = (BinarySearchTree<E>) super.clone();
+			clone.depth = this.depth;
+			clone.root = new Node();
+			clone.size = this.size;
+			copy(clone.root, this.root);
 		} catch (CloneNotSupportedException e) {
 			//This should't happen because we are cloneable
 		}
-		return v;
+		return clone;
+	}
+	//TODO change this implementation to an iterative one to avoid StackOverflow in large trees
+	private void copy(Node cloneNode, Node node) {
+		if(node.left != null) {
+			cloneNode.left = new Node();
+			cloneNode.left.parent = cloneNode;
+			copy(cloneNode.left, node.left);
+		}
+		cloneNode.value = node.value;
+		if(node.right != null) {
+			cloneNode.right = new Node();
+			cloneNode.right.parent = cloneNode;
+			copy(cloneNode.right, node.right);
+		}
 	}
 	@Override
 	public E commonAncestor(E node1, E node2) throws NodeNotFoundException {
 		checkNode(node1);
 		checkNode(node2);
-		int height1 = 0;
-		E e1 = node1; 
-		while(e1 != null) {
-			height1++;
-			e1 = parent(e1);
-		}
-		int height2 = 0;
-		E e2 = node2; 
-		while(e2 != null) {
-			height2++;
-			e2 = parent(e2);
-		}
-		if(height1 > height2) {
-			while(height1 - height2 > 0) {
-				node1 = parent(node1);
-				height1--;
-			}
-		} else {
-			while(height2 - height1 > 0) {
-				node2 = parent(node2);
-				height2--;
-			}
-		}
-		while(node1 != null && !node1.equals(node2)) {
-			node1 = parent(node1);
-			node2 = parent(node2);
-		}
-		return node1;
-	}
-	@Override
-	public boolean contains(Object o) {
-		if(o == null)
-			return false;
-		else
-			return nodeList.contains(o);
+		return new TreeHelper().commonAncestor(this, node1, node2);
 	}
 	@SuppressWarnings("unchecked")
 	@Override
-	public boolean containsAll(Collection<?> c) {
-		for(Object i : c) {
-			checkNode((E) i);
-			if(!nodeList.contains(i))
+	public boolean contains(Object o) {
+		if(o == null || isEmpty())
+			return false;
+		else if (o instanceof Comparable){
+			try {
+				return node(root, (Comparable<E>) o) != null;
+			} catch (NodeNotFoundException e) {
 				return false;
-		}
+			}
+		} else
+			return searchTree(root, o) != null;
+			
+	}
+	@Override
+	public boolean containsAll(Collection<?> c) {
+		for(Object i : c)
+			if(!contains(i))
+				return false;
 		return true;
 	}
 	@Override
@@ -247,14 +198,14 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 	@Override
 	@Deprecated
 	public List<E> inorderOrderTraversal() {
-		return inorderOrderTraversal(0, new ArrayList<E>());
+		return inOrderTraversal(root, new ArrayList<E>());
 	}
 	@Override
 	public List<E> inOrderTraversal() {
 		if(isEmpty())
 			return new ArrayList<E>();
 		else
-			return inorderOrderTraversal(rootIndex, new ArrayList<E>());
+			return inOrderTraversal(root, new ArrayList<E>());
 	}
 	@Override
 	public boolean isAncestor(E node, E child) throws NodeNotFoundException {
@@ -279,23 +230,15 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 		if(isEmpty())
 			return new ArrayList<E>();
 		else
-			return leaves(rootIndex, new ArrayList<E>());
+			return leaves(root, new ArrayList<E>());
 	}
-	private List<E> leaves(int nodeIndex, ArrayList<E> list) {
-		int[] children = childrenArray.get(nodeIndex);
-		if(children.length > 0)	{
-			int i = 0;
-			int chidrenLength = children.length;
-			for(int len = (int)Math.ceil((double)chidrenLength / 2); i < len; i++)
-				if(children[i] > -1)
-					leaves(children[i], list);
-			if(isChildrenArrayEmpty(childrenArray.get(nodeIndex)))
-				list.add(nodeList.get(nodeIndex));
-			for(int len = chidrenLength; i < len; i++)
-				if(children[i] > -1)
-					leaves(children[i], list);
-		} else if(isChildrenArrayEmpty(childrenArray.get(nodeIndex)))
-			list.add(nodeList.get(nodeIndex));
+	private List<E> leaves(Node node, ArrayList<E> list) {
+		if(node.left != null)
+			leaves(node.left, list);
+		if(node.left == null && node.right == null)
+			list.add(node.value);
+		if(node.right != null)
+			leaves(node.right, list);
 		return list;
 	}
 	@Override
@@ -303,34 +246,36 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 		if(isEmpty())
 			return new ArrayList<E>();
 		else {
-			LinkedList<Integer> queue = new LinkedList<Integer>();
-			queue.add(0);
+			LinkedList<Node> queue = new LinkedList<Node>();
+			queue.add(root);
 			return levelOrderTraversal(new ArrayList<E>(), queue);
 		}
 	}
 	@Override
 	public E parent(E e) throws NodeNotFoundException {
 		checkNode(e);
-		int index = nodeList.indexOf(e);
-		if(index == 0)
-			return null;
-		else if(index > 0)
-			return nodeList.get(parentList.get(index));
-		else
-			throw new NodeNotFoundException("No node was found for object");
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for the parameter");
+		else {
+			Node parent = node(root, e).parent;
+			if(parent != null)
+				return parent.value;
+			else
+				return null;
+		}
 	}
 	@Override
 	public List<E> postOrderTraversal() {
 		if(isEmpty())
 			return new ArrayList<E>();
 		else
-			return postOrderTraversal(rootIndex, new ArrayList<E>());
+			return postOrderTraversal(root, new ArrayList<E>());
 	}
 	public List<E> preOrderTraversal() {
 		if(isEmpty())
 			return new ArrayList<E>();
 		else
-			return preOrderTraversal(rootIndex, new ArrayList<E>());
+			return preOrderTraversal(root, new ArrayList<E>());
 	}
 	/**
 	 * Deletes node as mentioned in <a href="http://en.wikipedia.org/wiki/Binary_search_tree#Deletion">BST</a>.
@@ -340,92 +285,116 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean remove(Object o) {
-		checkNode((E)o);
-		int index = nodeList.indexOf(o);
-		if(index > -1) {
-			try {
-				List<E> children = children((E) o);
-				if(children.isEmpty())
-					deleteCase1(index);
-				else if(children.size() == 1)
-					deleteCase2(index);
-				else
-					deleteCase3(index, (E) o);
-				return true;
-			} catch (NodeNotFoundException e) {
-				e.printStackTrace();//Not expected as we have already checked for presence in tree
+		checkNode(o);
+		try {
+			Node node;
+			if(isEmpty())
 				return false;
-			}
+			else if(o instanceof Comparable) {
+				node = node(root, (Comparable<E>) o);
+			} else
+				node = searchTree(root, o);
+			boolean remove = remove(node);
+			size--;
+			depth = recalculateDepth(root, 0);
+			return remove;
+		} catch (NodeNotFoundException e) {
+			return false;
 		}
-		return false;
 	}
-	private void deleteCase3(int index, E o) throws NodeNotFoundException {
-		E nodeToReplace;
-		if(Math.random() > 0.5)
-			nodeToReplace = successor(o);
+	private Node searchTree(Node node, Object o) {
+		if(node.left != null) {
+			Node nodeReturned = searchTree(node.left, o);
+			if(nodeReturned != null)
+				return nodeReturned;
+		}
+		if(node.right != null) {
+			Node nodeReturned = searchTree(node.right, o);
+			if(nodeReturned != null)
+				return nodeReturned;
+		}
+		if(o.equals(node.value))
+			return node;
 		else
-			nodeToReplace = predecessor(o);
-		int nodeToReplaceIndex = nodeList.indexOf(nodeToReplace);
-		nodeList.set(index, nodeToReplace);
-		nodeList.set(nodeToReplaceIndex, o);
-		remove(o);
+			return null;
 	}
-	private void deleteCase2(int index) {
-		Integer parentIndex = parentList.set(index, -1);
-		for(int i = 0; i < childrenArray.get(parentIndex).length; i++) {
-			if(childrenArray.get(parentIndex)[i] == index) {
-				if(childrenArray.get(index)[0] > -1)
-					childrenArray.get(parentIndex)[i] = childrenArray.get(index)[0];
-				else
-					childrenArray.get(parentIndex)[i] = childrenArray.get(index)[1];
-				break;
-			}
-		}
-		nodeList.set(index, null);
-		size--;
-		for(int i : childrenArray.get(index))
-			if(i > -1)
-				parentList.set(i, parentIndex);
-		Arrays.fill(childrenArray.get(index), -1);
-		parentList.set(index, -1);
-		depth = recalculateDepth(rootIndex, 0);		
+	private boolean remove(Node node) throws NodeNotFoundException {
+		int children = 0;
+		if(node.left != null)
+			children++;
+		if(node.right != null)
+			children++;
+		if(children == 0)
+			deleteCase1(node);
+		else if(children == 1)
+			deleteCase2(node);
+		else
+			deferDelete(node);
+		return true;
 	}
-	private void deleteCase1(int index) {
-		Integer parentIndex = parentList.set(index, -1);
-		for(int i = 0; i < childrenArray.get(parentIndex).length; i++)
-			if(childrenArray.get(parentIndex)[i] == index)
-				childrenArray.get(parentIndex)[i] = -1;
-		nodeList.set(index, null);
-		size--;
-		Arrays.fill(childrenArray.get(index), -1);
-		parentList.set(index, -1);
-		depth = recalculateDepth(rootIndex, 0);
+	private void deferDelete(Node node) throws NodeNotFoundException {
+		Node nodeToReplace;
+		if(Math.random() > 0.5)
+			nodeToReplace = successorNode(node);
+		else
+			nodeToReplace = predecessorNode(node);
+		node.value = nodeToReplace.value;
+		remove(nodeToReplace);
+	}
+	private void deleteCase2(Node node) throws NodeNotFoundException {
+		Node child;
+		if(node.left != null)
+			child = node.left;
+		else
+			child = node.right;
+		node.value = child.value;
+		remove(child);
+	}
+	private void deleteCase1(Node node) {
+		if(node.parent.left == node)
+			node.parent.left = null;
+		else
+			node.parent.right = null;
+		node = null;
 	}
 	@Override
-	public E successor(E node) throws NodeNotFoundException {
-		E right = right(node);
+	public E successor(E value) throws NodeNotFoundException {
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for the parameter");
+		else
+			return successorNode(node(root, value)).value;
+	}
+	private Node successorNode(Node node) throws NodeNotFoundException {
+		Node right = node.right;
 		if(right != null) {
 			node = right;
-			while(left(node) != null)
-				node = left(node);
+			while(node.left != null)
+				node = node.left;
 			return node;
 		} else {
-			while(!right(parent(node)).equals(node))
-				node = parent(node);
+			while(!node.parent.right.value.equals(node.value))
+				node = node.parent;
 			return node;
 		}
 	}
 	@Override
-	public E predecessor(E node) throws NodeNotFoundException {
-		E left = left(node);
+	public E predecessor(E value) throws NodeNotFoundException {
+		checkNode(value);
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for the parameter");
+		else
+			return predecessorNode(node(root, value)).value;
+	}
+	private Node predecessorNode(Node node) throws NodeNotFoundException {
+		Node left = node.left;
 		if(left != null) {
 			node = left;
-			while(right(node) != null)
-				node = right(node);
+			while(node.right != null)
+				node = node.right;
 			return node;
 		} else {
-			while(!left(parent(node)).equals(node))
-				node = parent(node);
+			while(!node.parent.left.value.equals(node.value))
+				node = node.parent;
 			return node;
 		}
 	}
@@ -447,19 +416,23 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 		if(isEmpty())
 			return null;
 		else
-			return nodeList.get(rootIndex);
+			return root.value;
 	}
 	@Override
 	public List<E> siblings(E e) throws NodeNotFoundException {
 		checkNode(e);
-		E parent = parent(e);
-		if(parent != null) {
-			List<E> children = children(parent);
-			children.remove(e);
-			return children;
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for the object");
+		else {
+			E parent = parent(e);
+			if(parent != null) {
+				List<E> children = children(parent);
+				children.remove(e);
+				return children;
+			}
+			else
+				return new ArrayList<E>();
 		}
-		else
-			return new ArrayList<E>();
 	}
 	@Override
 	public int size() {
@@ -474,34 +447,15 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 		return getCurrentList().toArray(a);
 	}
 
-	private void addChild(E child, int parentIndex, int childIndex) {
-		nodeList.add(child);
-		parentList.add(parentIndex);
-		childrenArray.get(parentIndex)[childIndex] = nodeList.size() - 1;
-		int[] children = new int[MAX_CHILDREN];
-		Arrays.fill(children, -1);
-		childrenArray.add(children);
-		size++;
-		int currentDepth = 2;
-		while(parentIndex != 0)	{
-			parentIndex = parentList.get(parentIndex);
-			currentDepth++;
-		}
-		depth = Math.max(currentDepth, depth);
-	}
-
-	private void addRoot(E child) {
-		nodeList.add(child);
-		rootIndex = nodeList.size() - 1;
-		parentList.add(-1);
-		int[] children = new int[MAX_CHILDREN];
-		Arrays.fill(children, -1);
-		childrenArray.add(children);
+	private void addRoot(E root) {
+		Node rootNode = new Node();
+		rootNode.value = root;
+		this.root = rootNode;
 		size++;
 		depth++;
 	}
 
-	private void checkNode(E child) {
+	private void checkNode(Object child) {
 		if(child == null)
 			throw new IllegalArgumentException("null nodes are not allowed");
 	}
@@ -509,87 +463,73 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 	private List<E> getCurrentList() {
 		return inOrderTraversal();
 	}
-	private int getEmptySlot(int[] children) {
-		for (int i = 0; i < children.length; i++)
-			if(children[i] == -1)
-				return i;
-		return -1;
-	}
-	private List<E> inorderOrderTraversal(int nodeIndex, ArrayList<E> list) {
-		int[] children = childrenArray.get(nodeIndex);
-		if(children.length > 0)	{
-			int i = 0;
-			for(int len = (int)Math.ceil((double)children.length / 2); i < len; i++)
-				if(children[i] > -1)
-					inorderOrderTraversal(children[i], list);
-			list.add(nodeList.get(nodeIndex));
-			for(int len = children.length; i < len; i++)
-				if(children[i] > -1)
-					inorderOrderTraversal(children[i], list);
-		}
-		else
-			list.add(nodeList.get(nodeIndex));
+	private List<E> inOrderTraversal(Node node, ArrayList<E> list) {
+		if(node.left != null)
+			inOrderTraversal(node.left, list);
+		list.add(node.value);
+		if(node.right != null)
+			inOrderTraversal(node.right, list);
 		return list;
 	}
-	private boolean isChildrenArrayEmpty(int[] children) {
-		for (int i = 0; i < children.length; i++)
-			if(children[i] != -1)
-				return false;
-		return true;
-	}
-	private List<E> levelOrderTraversal(ArrayList<E> list, LinkedList<Integer> queue) {
+	private List<E> levelOrderTraversal(ArrayList<E> list, LinkedList<Node> queue) {
 		while(!queue.isEmpty()) {
-			list.add(nodeList.get(queue.getFirst()));
-			for(int i : childrenArray.get(queue.getFirst()))
-				if(i > -1)
-					queue.add(i);
+			list.add(queue.getFirst().value);
+			if(queue.getFirst().left != null)
+				queue.add(queue.getFirst().left);
+			if(queue.getFirst().right != null)
+				queue.add(queue.getFirst().right);
 			queue.remove();
 		}
 		return list;
 	}
-	private List<E> postOrderTraversal(int nodeIndex, ArrayList<E> list) {
-		for(int  i :  childrenArray.get(nodeIndex))
-			if(i > -1)
-				postOrderTraversal(i, list);
-		if(nodeList.get(nodeIndex) != null)
-			list.add(nodeList.get(nodeIndex));
+	private List<E> postOrderTraversal(Node node, ArrayList<E> list) {
+		if(node.left != null)
+			postOrderTraversal(node.left, list);
+		if(node.right != null)
+			postOrderTraversal(node.right, list);
+		list.add(node.value);
 		return list;
 	}
-	private List<E> preOrderTraversal(int nodeIndex, ArrayList<E> list) {
-		if(nodeList.get(nodeIndex) != null)
-			list.add(nodeList.get(nodeIndex));
-		for(int i : childrenArray.get(nodeIndex))
-			if(i > -1)
-				preOrderTraversal(i, list);
+	private List<E> preOrderTraversal(Node node, ArrayList<E> list) {
+		list.add(node.value);
+		if(node.left != null)
+			preOrderTraversal(node.left, list);
+		if(node.right != null)
+			preOrderTraversal(node.right, list);
 		return list;
 	}
-	private int recalculateDepth(int index, int depth) {
+	private int recalculateDepth(Node node, int depth) {
 		int childDepth = depth + 1;
-		if(isChildrenArrayEmpty(childrenArray.get(index)))
+		if(node.left == null && node.right == null)
 			return childDepth;
-		for(int i : childrenArray.get(index))
-			if(i != -1)
-				depth = Math.max(depth, recalculateDepth(i, childDepth));
+		else {
+			if(node.left != null)
+				depth = Math.max(depth, recalculateDepth(node.left, childDepth));
+			if(node.right != null)
+				depth = Math.max(depth, recalculateDepth(node.right, childDepth));
+		}
 		return depth;
 	}
 	@Override
 	public String toString() {
 		return getCurrentList().toString();
 	}
-	private E findParent(E root, E child) throws NodeNotFoundException {
-		if(child.compareTo(root) > 0) {
-			E right = right(root);
+
+	private Node findParent(Node parent, E child) throws NodeNotFoundException {
+		if(child.compareTo(parent.value) > 0) {
+			Node right = parent.right;
 			if(right != null)
 				return findParent(right, child);
 			else
-				return root;
-		} else {
-			E left = left(root);
+				return parent;
+		} else if(child.compareTo(parent.value) < 0) {
+			Node left = parent.left;
 			if(left != null)
 				return findParent(left, child);
 			else
-				return root;
-		}
+				return parent;
+		} else
+			return null;//Such a node already exists
 	}
 	/**
 	 * @param parent
@@ -597,7 +537,16 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 	 * @throws NodeNotFoundException
 	 */
 	public E left(E parent) throws NodeNotFoundException {
-		return child(parent, 0);
+		checkNode(parent);
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for object");
+		else {
+			Node left = node(root, parent).left;
+			if(left != null)
+				return node(root, parent).left.value;
+			else
+				return null;
+		}
 	}
 	/**
 	 * @param parent
@@ -605,7 +554,13 @@ public class BinarySearchTree<E extends Comparable<E>> implements SortedTree<E>,
 	 * @throws NodeNotFoundException
 	 */
 	public E right(E parent) throws NodeNotFoundException {
-		return child(parent, 1);
+		checkNode(parent);
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for object");
+		else {
+			Node right = node(root, parent).right;
+			return right.value;
+		}
 	}
 	@Override
 	public int hashCode() {

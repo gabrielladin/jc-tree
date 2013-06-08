@@ -14,27 +14,20 @@
 package com.gaurav.tree;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.gaurav.tree.LinkedBinarySearchTree.Node;
 
 /**
- * The nodes in this class always have a particular number of children. It is not possible to add more children 
- * than the number provided in the constructor. Since the children are numbered, it is possible to access them
- * by index. This class serves as a base class to trees which are used to keep order among its elements e.g. BST
  * 
- * add(parent, child) adds child to the first available slot. Thus, it is better to add nodes using 
- * add(parent, child, index)
  * @author Gaurav Saxena
  *
  * @param <E>
  */
 public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E>, Cloneable {
-	class Node {
+	private class Node {
 		Node parent, left, right;
 		E value;
 		COLOR color;
@@ -51,26 +44,26 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 				addRoot(child);
 				return true;
 			} else {
-				E parent = findParent(root(), child);
-				return addNode(parent, child, parent.compareTo(child) > 0 ? 0 : 1);
+				Node parent = findParent(root, child);
+				if(parent != null) {
+					return addNode(parent, child);
+				} else {
+					Node node = node(root, child);
+					node.value = child;
+					return false;
+				}
 			}
 		} catch (NodeNotFoundException e) {
 			e.printStackTrace();
 		}
 		return false;
 	}
-	private boolean addNode(E parent, E child, int childIndex) throws NodeNotFoundException {
+	private boolean addNode(Node parent, E child) throws NodeNotFoundException {
 		checkNode(child);
-		checkIndex(childIndex);
-		if(isRootElementBeingAdded(parent, child))//case 1
-			return true;
-		Node parentNode = findParent(root, child);
-		if(parentNode != null) {
-			addChild(parentNode, child);
-			mendTree(parentIndex, parent, childIndex, child);
-			return true;
-		} else
-			throw new NodeNotFoundException("No node was found for parent object");
+		mendTree(parent, addChild(parent, child));
+		size++;
+		depth = recalculateDepth(root, 0);
+		return true;
 	}
 	private Node node(Node parent, Comparable<E> child) throws NodeNotFoundException {
 		if(child.compareTo(parent.value) > 0) {
@@ -104,130 +97,100 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		} else
 			return null;//Such a node already exists
 	}
-	private void putColor(int index, COLOR c) {
-		colorList.remove(index);
-		colorList.add(index, c);		
+	private void mendTree(Node parent, Node child) throws NodeNotFoundException {
+		inserCase1(parent, child);
 	}
-	private void mendTree(int parentIndex, E parent, int childIndex, E child) throws NodeNotFoundException {
-		inserCase1(parentIndex, parent, childIndex, child);
-	}
-	private void inserCase1(int parentIndex, E parent, int childIndex, E child) throws NodeNotFoundException {
+	private void inserCase1(Node parent, Node child) throws NodeNotFoundException {
 		if(parent == null)
-			putColor(childIndex, COLOR.BLACK);
+			child.color = COLOR.BLACK;
 		else
-			inserCase2(parentIndex, parent, childIndex, child);
+			inserCase2(parent, child);
 	}
-	private void inserCase2(int parentIndex, E parent, int childIndex, E child) throws NodeNotFoundException {
-		if(colorList.get(parentIndex) != COLOR.BLACK) //case 2
-			insertCase3(parentIndex, parent, childIndex, child);
+	private void inserCase2(Node parent, Node child) throws NodeNotFoundException {
+		if(!(parent.color == COLOR.BLACK)) //case 2
+			insertCase3(parent, child);
 	}
-	private void insertCase3(int parentIndex, E parent, int childIndex, E child) throws NodeNotFoundException {
-		E uncleNode = uncle(child);
-		if(uncleNode != null) {
-			int uncleIndex = nodeList.indexOf(uncleNode);
-			if(colorList.get(uncleIndex) == COLOR.RED) {
-				putColor(parentIndex, COLOR.BLACK);
-				putColor(uncleIndex, COLOR.BLACK);
-				putColor(nodeList.indexOf(parent(parent(child))), COLOR.RED);
-				inserCase1(parentIndex, parent, childIndex, child);
+	private void insertCase3(Node parent, Node child) throws NodeNotFoundException {
+		Node uncle = uncle(child);
+		if(uncle != null) {
+			if(uncle.color == COLOR.RED) {
+				parent.color = COLOR.BLACK;
+				uncle.color = COLOR.BLACK;
+				child.parent.parent.color = COLOR.RED;
+				if(parent.parent != null)
+					inserCase1(parent.parent.parent, parent.parent);
 			} else
-				insertCase4(parentIndex, parent, childIndex, child);
+				insertCase4(parent, child);
 		} else
-			insertCase4(parentIndex, parent, childIndex, child);
+			insertCase4(parent, child);
 	}
-	private void insertCase4(int parentIndex, E parent, int childIndex, E child) throws NodeNotFoundException {
-		E grandParent = parent(parent);
-		if(right(parent).equals(child) && left(grandParent).equals(parent)) {
+	private void insertCase4(Node parent, Node child) throws NodeNotFoundException {
+		Node grandParent = parent.parent;
+		if(parent.right != null && parent.right.value.equals(child.value) && grandParent.left != null && grandParent.left.value.equals(parent.value)) {
 			rotateLeft(parent);
-		} else if(left(parent).equals(child) && right(grandParent).equals(parent)) {
+		} else if(parent.left != null && parent.left.value.equals(child.value) && grandParent.right != null && grandParent.right.value.equals(parent.value)) {
 			rotateRight(parent);
 		} else
-			insertCase5(parentIndex, parent, childIndex, child);
+			insertCase5(parent, child);
 	}
-	private void insertCase5(int parentIndex, E parent, int childIndex, E child) throws NodeNotFoundException {
-		E grandParent = parent(parent);
-		putColor(parentIndex, COLOR.BLACK);
-		putColor(childIndex,COLOR.RED);
-		if(left(parent).equals(child))
+	private void insertCase5(Node parent, Node child) throws NodeNotFoundException {
+		Node grandParent = parent.parent;
+		parent.color = COLOR.BLACK;
+		child.color = COLOR.RED;
+		if(parent.left != null && parent.left.value.equals(child.value))
 			rotateRight(grandParent);
 		else
 			rotateLeft(grandParent);
 	}
 	//http://upload.wikimedia.org/wikipedia/commons/2/23/Tree_rotation.png
-	private void rotateRight(E root) throws NodeNotFoundException {
-		int rootIndex = nodeList.indexOf(root);
-		E rootOs = left(root);
-		int rootOsIndex = nodeList.indexOf(rootOs);
-		E rootRs = right(root);
-		int rootRsIndex = nodeList.indexOf(rootRs);
-		E rootOsLeft = left(rootOs);
-		int rootOsLeftIndex = nodeList.indexOf(rootOsLeft);
-		E rootOsRight = right(rootOs);
-		int rootOsRightIndex = nodeList.indexOf(rootOsRight);
-		
-		nodeList.remove(rootIndex);//Add P in Q's place
-		nodeList.add(rootIndex, rootOs);//Now P is at rootIndex
-		nodeList.remove(rootOsIndex);//Add Q in P's place
-		nodeList.add(rootOsIndex, root);//Now Q is at rootOsIndex
-		
-		parentList.remove(rootRsIndex);//change C's parent entry to new Q's index (rootOsIndex)
-		parentList.add(rootRsIndex, rootOsIndex);
-		
-		parentList.remove(rootOsLeftIndex);//change A's parent entry to new P's index (rootIndex)
-		parentList.add(rootOsLeftIndex, rootIndex);
-		
-		childrenArray.get(rootIndex)[0] = rootOsLeftIndex;//left of P
-		childrenArray.get(rootIndex)[1] = rootOsIndex;//right of P
-		
-		childrenArray.get(rootOsIndex)[0] = rootOsRightIndex;//left of Q
-		childrenArray.get(rootOsIndex)[1] = rootRsIndex;//right of Q
-		
+	private void rotateRight(Node q) throws NodeNotFoundException {
+		if(!q.value.equals(root.value)) {
+			Node p = q.left;
+			Node b = p.right;
+			
+			p.parent = q.parent;
+			if(q.parent.left != null && q.parent.left.value.equals(q.value))
+				q.parent.left = p;
+			else
+				q.parent.right = p;
+			p.right = q;
+			q.parent = p;
+			q.left = b;
+			if(b != null)
+				b.parent = q;
+		}
 	}
 	//http://upload.wikimedia.org/wikipedia/commons/2/23/Tree_rotation.png
-	private void rotateLeft(E root) throws NodeNotFoundException {
-		int rootIndex = nodeList.indexOf(root);
-		E rootOs = right(root);
-		int rootOsIndex = nodeList.indexOf(rootOs);
-		E rootRs = left(root);
-		int rootRsIndex = nodeList.indexOf(rootRs);
-		E rootOsRight = right(rootOs);
-		int rootOsRightIndex = nodeList.indexOf(rootOsRight);
-		E rootOsLeft = left(rootOs);
-		int rootOsLeftIndex = nodeList.indexOf(rootOsLeft);
-		
-		nodeList.remove(rootIndex);//Add Q in P's place
-		nodeList.add(rootIndex, rootOs);//Now Q is at rootIndex
-		nodeList.remove(rootOsIndex);//Add P in Q's place
-		nodeList.add(rootOsIndex, root);//Now P is at rootOsIndex
-		
-		parentList.remove(rootOsRightIndex);//change C's parent entry to new Q's index (rootIndex)
-		parentList.add(rootIndex, rootOsRightIndex);
-		
-		parentList.remove(rootOsIndex);//change A's parent entry to new P's index (rootOsIndex)
-		parentList.add(rootOsIndex, rootRsIndex);
-		
-		childrenArray.get(rootIndex)[0] = rootRsIndex;//right of Q
-		childrenArray.get(rootIndex)[1] = rootOsRightIndex;//left of Q
-		
-		childrenArray.get(rootOsIndex)[0] = rootRsIndex;//right of P
-		childrenArray.get(rootOsIndex)[1] = rootOsLeftIndex;//left of P
+	private void rotateLeft(Node p) throws NodeNotFoundException {
+		if(!p.value.equals(root.value)) {
+			Node q = p.right;
+			Node b = q.left;
+			q.parent = p.parent;
+			if(p.parent.left != null && p.parent.left.value.equals(p.value)) 
+				p.parent.left = q;
+			else
+				p.parent.right = q;
+			q.left = p;
+			p.parent = q;
+			p.right = b;
+			if(b != null)
+				b.parent = p;
+		}
 	}
-	private E uncle(E node) throws NodeNotFoundException {
-		E parentNode = node;
-		checkNode(node);
-		parentNode = parent(node);
-		E grandParentNode = parentNode;
+	private Node uncle(Node child) throws NodeNotFoundException {
+		Node parentNode = child.parent;
+		Node grandParentNode;
 		if(parentNode != null)
-			grandParentNode = parent(parentNode);
+			grandParentNode = parentNode.parent;
 		else
 			return null;
-		if(grandParentNode != null) {
-			for(E i : children(grandParentNode))
-				if(!i.equals(parentNode))
-					return i;
+		if(grandParentNode != null && grandParentNode.left != null) {
+			if(grandParentNode.left.value.equals(parentNode.value))
+				return grandParentNode.right;
+			else
+				return grandParentNode.left;
 		} else
 			return null;
-		return null;
 	}
 	/**
 	 * Unsupported Operation
@@ -237,20 +200,6 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 	@Override
 	public boolean add(E parent, E child) throws NodeNotFoundException {
 		throw new UnsupportedOperationException("A red-black tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use add(child)");
-	}
-	private boolean isRootElementBeingAdded(E parent, E child) {
-		if(parent == null) {
-			if(isEmpty()) {
-				addRoot(child);
-				return true;
-			} else
-				throw new IllegalArgumentException("parent cannot be null except for root element");
-		} else
-			return false;
-	}
-	private void checkIndex(int index) {
-		if(index < 0 || index > maxChildren - 1)
-			throw new IndexOutOfBoundsException("index found to be " + index + ".It should be between 0 and " + (maxChildren - 1));
 	}
 	@Override
 	public boolean addAll(Collection<? extends E> c) {
@@ -269,101 +218,83 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 			return false;
 		}
 	}
-	private E child(E parent, int index) throws NodeNotFoundException {
-		checkNode(parent);
-		int parentIndex = nodeList.indexOf(parent);
-		int childIndex;
-		if(parentIndex > -1) {
-			if((childIndex = childrenArray.get(parentIndex)[index]) > -1)
-				return nodeList.get(childIndex);
-			else
-				return null;
-		} else
-			throw new NodeNotFoundException("No node was found for object");
-	}
 	@Override
 	public List<E> children(E e) throws NodeNotFoundException {
 		checkNode(e);
-		int index = nodeList.indexOf(e);
-		if(index > -1) {
-			ArrayList<E> children = new ArrayList<E>();
-			for (int i = 0; i < childrenArray.get(index).length; i++)
-				if(childrenArray.get(index)[i] > -1)
-					children.add(nodeList.get(childrenArray.get(index)[i]));
-			return children;
+		ArrayList<E> list = new ArrayList<E>(2);
+		if(size != 0) {
+			Node node = node(root, e);
+			if(node.left != null)
+				list.add(node.left.value);
+			if(node.right != null)
+				list.add(node.right.value);
 		} else
 			throw new NodeNotFoundException("No node was found for object");
+		return list;
 	}
 	@Override
 	public void clear() {
-		nodeList.clear();
-		parentList.clear();
-		childrenArray.clear();
+		root = null;
 		size = 0;
 		depth = 0;
-		rootIndex = -1;
 	}
 	@Override
 	@SuppressWarnings("unchecked")
 	public Object clone() {
-		BinaryRedBlackTree<E> v = null;
+		BinaryRedBlackTree<E> clone = null;
 		try {
-			v = (BinaryRedBlackTree<E>) super.clone();
-			v.nodeList = (ArrayList<E>) nodeList.clone();
-			v.parentList = (ArrayList<Integer>) parentList.clone();
-			v.childrenArray = new ArrayList<int[]>();
-			v.size = this.size;
-			v.depth = this.depth;
-			for(int i = 0; i < childrenArray.size(); i++)
-				v.childrenArray.add(Arrays.copyOf(childrenArray.get(i), childrenArray.get(i).length));
+			clone = (BinaryRedBlackTree<E>) super.clone();
+			clone.depth = this.depth;
+			clone.root = new Node();
+			clone.size = this.size;
+			copy(clone.root, this.root);
 		} catch (CloneNotSupportedException e) {
 			//This should't happen because we are cloneable
 		}
-		return v;
+		return clone;
 	}
+	//TODO change this implementation to an iterative one to avoid StackOverflow in large trees
+		private void copy(Node cloneNode, Node node) {
+			if(node.left != null) {
+				cloneNode.left = new Node();
+				cloneNode.left.parent = cloneNode;
+				copy(cloneNode.left, node.left);
+			}
+			cloneNode.value = node.value;
+			cloneNode.color = node.color;
+			if(node.right != null) {
+				cloneNode.right = new Node();
+				cloneNode.right.parent = cloneNode;
+				copy(cloneNode.right, node.right);
+			}
+		}
 	@Override
 	public E commonAncestor(E node1, E node2) throws NodeNotFoundException {
 		checkNode(node1);
 		checkNode(node2);
-		int height1 = 0;
-		E e1 = node1; 
-		while(e1 != null) {
-			height1++;
-			e1 = parent(e1);
-		}
-		int height2 = 0;
-		E e2 = node2; 
-		while(e2 != null) {
-			height2++;
-			e2 = parent(e2);
-		}
-		if(height1 > height2) {
-			while(height1 - height2 > 0) {
-				node1 = parent(node1);
-				height1--;
-			}
-		} else {
-			while(height2 - height1 > 0) {
-				node2 = parent(node2);
-				height2--;
-			}
-		}
-		while(node1 != null && !node1.equals(node2)) {
-			node1 = parent(node1);
-			node2 = parent(node2);
-		}
-		return node1;
+		return new TreeHelper().commonAncestor(this, node1, node2);
 	}
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	@Override
 	public boolean contains(Object o) {
-		if(o == null)
+		if (o == null || size == 0)
 			return false;
-		else
-			return nodeList.indexOf(o) > -1;
+		else if (o instanceof Comparable) {
+			try {
+				node(root, (Comparable) o);
+				return true;
+			} catch (NodeNotFoundException e) {
+				return false;
+			}
+		} else
+			return searchTree(root, o) != null;
 	}
 	@Override
 	public boolean containsAll(Collection<?> c) {
-		return nodeList.containsAll(c);
+		for(Object i : c)
+			if(!contains(i))
+				return false;
+		return true;
 	}
 	@Override
 	public int depth() {
@@ -372,44 +303,24 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 	@Override
 	@Deprecated
 	public List<E> inorderOrderTraversal() {
-		return inorderOrderTraversal(0, new ArrayList<E>());
+		return inOrderTraversal(root, new ArrayList<E>());
 	}
 	@Override
 	public List<E> inOrderTraversal() {
 		if(isEmpty())
 			return new ArrayList<E>();
 		else
-			return inorderOrderTraversal(rootIndex, new ArrayList<E>());
+			return inOrderTraversal(root, new ArrayList<E>());
 	}
 	@Override
 	public boolean isAncestor(E node, E child) throws NodeNotFoundException {
 		checkNode(child);
-		child = parent(child);
-		if(node != null) {//if parent is root, it has to be an ancestor
-			while(child != null) {
-				if(child.equals(node))
-					return true;
-				else
-					child = parent(child);
-			}
-		}
-		return true;
+		return new TreeHelper().isAncestor(this, node, child);
 	}
 	@Override
 	public boolean isDescendant(E parent, E node) throws NodeNotFoundException {
-		checkNode(node);
-		int index = nodeList.indexOf(node);
-		E child = parent(node);
-		if(index > -1) {
-			while(child != null) {
-				if(child.equals(parent))
-					return true;
-				else
-					child = parent(child);
-			}
-			return false;
-		} else
-			throw new NodeNotFoundException("No node was found for object");
+		checkNode(parent);
+		return new TreeHelper().isDescendant(this, parent, node);
 	}
 	@Override
 	public boolean isEmpty() {
@@ -424,24 +335,15 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		if(isEmpty())
 			return new ArrayList<E>();
 		else
-			return leaves(rootIndex, new ArrayList<E>());
+			return leaves(root, new ArrayList<E>());
 	}
-	private List<E> leaves(int nodeIndex, ArrayList<E> list) {
-		int[] children = childrenArray.get(nodeIndex);
-		if(children.length > 0)	{
-			int i = 0;
-			int chidrenLength = children.length;
-			for(int len = (int)Math.ceil((double)chidrenLength / 2); i < len; i++)
-				if(children[i] > -1)
-					leaves(children[i], list);
-			if(isChildrenArrayEmpty(childrenArray.get(nodeIndex)))
-				list.add(nodeList.get(nodeIndex));
-			for(int len = chidrenLength; i < len; i++)
-				if(children[i] > -1)
-					leaves(children[i], list);
-		}
-		else if(isChildrenArrayEmpty(childrenArray.get(nodeIndex)))
-			list.add(nodeList.get(nodeIndex));
+	private List<E> leaves(Node node, ArrayList<E> list) {
+		if(node.left != null)
+			leaves(node.left, list);
+		if(node.left == null && node.right == null)
+			list.add(node.value);
+		if(node.right != null)
+			leaves(node.right, list);
 		return list;
 	}
 	@Override
@@ -449,198 +351,248 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		if(isEmpty())
 			return new ArrayList<E>();
 		else {
-			LinkedList<Integer> queue = new LinkedList<Integer>();
-			queue.add(0);
+			LinkedList<Node> queue = new LinkedList<Node>();
+			queue.add(root);
 			return levelOrderTraversal(new ArrayList<E>(), queue);
 		}
 	}
 	@Override
 	public E parent(E e) throws NodeNotFoundException {
 		checkNode(e);
-		int index = nodeList.indexOf(e);
-		if(index == 0)
-			return null;
-		else if(index > 0)
-			return nodeList.get(parentList.get(index));
-		else
+		if(size == 0)
 			throw new NodeNotFoundException("No node was found for object");
+		Node node = node(root, e);
+		if(node != root)
+			return node.parent.value;
+		else
+			return null;
 	}
 	@Override
 	public List<E> postOrderTraversal() {
 		if(isEmpty())
 			return new ArrayList<E>();
 		else
-			return postOrderTraversal(rootIndex, new ArrayList<E>());
+			return postOrderTraversal(root, new ArrayList<E>());
 	}
 	public List<E> preOrderTraversal() {
 		if(isEmpty())
 			return new ArrayList<E>();
 		else
-			return preOrderTraversal(rootIndex, new ArrayList<E>());
+			return preOrderTraversal(root, new ArrayList<E>());
 	}
 	@Override
-	public E successor(E node) throws NodeNotFoundException {
-		E right = right(node);
+	public E successor(E value) throws NodeNotFoundException {
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for the parameter");
+		else
+			return successorNode(node(root, value)).value;
+	}
+	private Node successorNode(Node node) throws NodeNotFoundException {
+		Node right = node.right;
 		if(right != null) {
 			node = right;
-			while(left(node) != null)
-				node = left(node);
+			while(node.left != null)
+				node = node.left;
 			return node;
 		} else {
-			while(!right(parent(node)).equals(node))
-				node = parent(node);
+			while(!node.parent.right.value.equals(node.value))
+				node = node.parent;
 			return node;
 		}
 	}
 	@Override
-	public E predecessor(E node) throws NodeNotFoundException {
-		E left = left(node);
+	public E predecessor(E value) throws NodeNotFoundException {
+		checkNode(value);
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for the parameter");
+		else
+			return predecessorNode(node(root, value)).value;
+	}
+	private Node predecessorNode(Node node) throws NodeNotFoundException {
+		Node left = node.left;
 		if(left != null) {
 			node = left;
-			while(right(node) != null)
-				node = right(node);
+			while(node.right != null)
+				node = node.right;
 			return node;
 		} else {
-			while(!left(parent(node)).equals(node))
-				node = parent(node);
+			while(!node.parent.left.value.equals(node.value))
+				node = node.parent;
 			return node;
 		}
+	}
+	private boolean remove(Node node) {
+		try {
+			
+			if(node.left != null && node.right != null)
+				deferDelete(node);
+			else
+				deleteCaseLeaf(node);
+		} catch (NodeNotFoundException e) {
+			e.printStackTrace();
+			return false;
+		}
+		return true;
 	}
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean remove(Object o) {
-		checkNode((E)o);
-		int index = nodeList.indexOf(o);
-		if(index > -1) {
-			try {
-				List<E> children = children((E) o);
-				if(children.size() == 2)
-					deferDelete(index, (E)o);
-				else
-					deleteCaseLeaf(index, (E)o);
-				return true;
-			} catch (NodeNotFoundException e) {
-				e.printStackTrace();//Not expected as we have already checked for presence in tree
+		checkNode(o);
+		try {
+			Node node;
+			if(isEmpty())
 				return false;
-			}
-		}
-		return false;
-	}
-	private void deleteCaseLeaf(int index, E o) throws NodeNotFoundException {
-		E parent = parent(o);
-		E child = left(parent);
-		if(child == null)
-			child = right(parent);
-		if(child == null) {
-			colorList.set(index, null);
-			nodeList.set(index, null);
-		} else
-			deleteCaseRedNode(index, o, child);
-	}
-	private void deleteCaseRedNode(int index, E o, E child) throws NodeNotFoundException {
-		if(colorList.get(index).equals(COLOR.RED)) {
-			int indexOfChild = nodeList.indexOf(child);
-			colorList.set(index, colorList.get(indexOfChild));
-			colorList.set(indexOfChild, null);
-			nodeList.set(index, nodeList.get(indexOfChild));
-			nodeList.set(indexOfChild, null);
-		} else
-			deleteCase0(index, o, child);
-	}
-	//Assuming there is only one non-leaf children attached to o
-	private void deleteCase0(int index, E o, E child) throws NodeNotFoundException {
-		if(colorList.get(index) == COLOR.BLACK) {
-			int indexOfChild = nodeList.indexOf(child);
-			if(colorList.get(indexOfChild) == COLOR.RED) {
-				//colorList.set(index, COLOR.BLACK);
-				colorList.set(indexOfChild, null);
-				nodeList.set(index, nodeList.get(indexOfChild));
-				nodeList.set(indexOfChild, null);
-			} else {
-				nodeList.set(index, nodeList.get(indexOfChild));
-				nodeList.set(indexOfChild, null);
-				deleteCase1(child);
-			}
-		}
-			
-	}
-	private void deleteCase1(E child) throws NodeNotFoundException {
-		if(!child.equals(nodeList.get(rootIndex)))
-			deleteCase2(child);
-	}
-	private void deleteCase2(E child) throws NodeNotFoundException {
-		E sibling = siblings(child).get(0);
-		int siblingIndex = nodeList.indexOf(sibling);
-		int parentIndex = nodeList.indexOf(parent(child));
-		if(colorList.get(siblingIndex) == COLOR.RED) {
-			
-			colorList.set(parentIndex, COLOR.RED);
-			colorList.set(siblingIndex, COLOR.BLACK);
-			if(child.equals(left(nodeList.get(parentIndex))))
-				rotateLeft(nodeList.get(parentIndex));
-			else
-				rotateRight(nodeList.get(parentIndex));
-		} else
-			deleteCase3(child, siblingIndex, parentIndex);
-	}
-	private void deleteCase3(E child, int siblingIndex, int parentIndex) throws NodeNotFoundException {
-		E left = left(nodeList.get(siblingIndex));
-		E right = right(nodeList.get(siblingIndex));
-		if(colorList.get(parentIndex) == COLOR.BLACK &&
-				colorList.get(siblingIndex) == COLOR.BLACK &&
-				(left == null || colorList.get(nodeList.indexOf(left)) == COLOR.BLACK) &&
-				(right == null || colorList.get(nodeList.indexOf(right)) == COLOR.BLACK)) {
-			colorList.set(siblingIndex, COLOR.RED);
-			deleteCase1(nodeList.get(parentIndex));
-		} else
-			deleteCase4(child, siblingIndex, parentIndex, left, right);
-	}
-	private void deleteCase4(E child, int siblingIndex, int parentIndex, E left, E right) throws NodeNotFoundException {
-		if(colorList.get(parentIndex) == COLOR.RED &&
-				colorList.get(siblingIndex) == COLOR.BLACK &&
-				(left == null || colorList.get(nodeList.indexOf(left)) == COLOR.BLACK) &&
-				(right == null || colorList.get(nodeList.indexOf(right)) == COLOR.BLACK)) {
-			colorList.set(siblingIndex, COLOR.RED);
-			colorList.set(parentIndex, COLOR.BLACK);
-		} else
-			deleteCase5(child, siblingIndex, parentIndex, left, right);
-	}
-	private void deleteCase5(E child, int siblingIndex, int parentIndex, E left, E right) throws NodeNotFoundException {
-		if(colorList.get(siblingIndex) == COLOR.BLACK) {
-			if(left(nodeList.get(parentIndex)).equals(child) &&
-					(colorList.get(nodeList.indexOf(left)) == COLOR.RED) &&
-					(right == null || colorList.get(nodeList.indexOf(right)) == COLOR.BLACK)) {
-				colorList.set(siblingIndex, COLOR.RED);
-				colorList.set(nodeList.indexOf(left), COLOR.BLACK);
-				rotateRight(nodeList.get(siblingIndex));
-			} else if(right(nodeList.get(parentIndex)).equals(child) &&
-					(left == null || colorList.get(nodeList.indexOf(left)) == COLOR.BLACK) &&
-					(colorList.get(nodeList.indexOf(right)) == COLOR.RED)) {
-				colorList.set(siblingIndex, COLOR.RED);
-				colorList.set(nodeList.indexOf(right), COLOR.BLACK);
-				rotateLeft(nodeList.get(siblingIndex));
-			}
-		}
-		deleteCase6(child, siblingIndex, parentIndex, left, right);
-	}
-	private void deleteCase6(E child, int siblingIndex, int parentIndex, E left, E right) throws NodeNotFoundException {
-		colorList.set(siblingIndex, colorList.get(parentIndex));
-		colorList.set(parentIndex, COLOR.BLACK);
-		if(child.equals(left(nodeList.get(parentIndex)))) {
-			colorList.set(nodeList.indexOf(right), COLOR.BLACK);
-			rotateLeft(nodeList.get(parentIndex));
-		} else {
-			colorList.set(nodeList.indexOf(left), COLOR.BLACK);
-			rotateRight(nodeList.get(parentIndex));
+			else if(o instanceof Comparable) {
+				node = node(root, (Comparable<E>) o);
+			} else
+				node = searchTree(root, o);
+			boolean remove = remove(node);
+			size--;
+			depth = recalculateDepth(root, 0);
+			return remove;
+		} catch (NodeNotFoundException e) {
+			return false;
 		}
 	}
-	private void deferDelete(int index, E o) throws NodeNotFoundException {
-		E nodeToReplace;
-		if(Math.random() > 0.5)
-			nodeToReplace = successor((E)o);
+	private Node searchTree(Node node, Object o) {
+		if(node.left != null) {
+			Node nodeReturned = searchTree(node.left, o);
+			if(nodeReturned != null)
+				return nodeReturned;
+		}
+		if(node.right != null) {
+			Node nodeReturned = searchTree(node.right, o);
+			if(nodeReturned != null)
+				return nodeReturned;
+		}
+		if(o.equals(node.value))
+			return node;
 		else
-			nodeToReplace = predecessor((E)o);
-		nodeList.set(index, nodeToReplace);
+			return null;
+	}
+	private void deleteCaseLeaf(Node node) throws NodeNotFoundException {
+		if(node.left == null && node.right == null) {
+			if(node.parent.left != null && node.parent.left == node)
+				node.parent.left = null;
+			else
+				node.parent.right = null;
+			node = null;
+		} else
+			deleteCaseRedNode(node);
+	}
+	private void deleteCaseRedNode(Node node) throws NodeNotFoundException {
+		if(node.color == COLOR.RED) {
+			Node child = node.left != null ? node.left : node.right;
+			child.parent = node.parent;
+			if(node.parent.left != null && node.parent.left.value.equals(node.value))
+				node.parent.left = child;
+			else
+				node.parent.right = child;
+		} else
+			deleteCase0(node);
+	}
+	/** For testing
+	 * @param o
+	 * @param red
+	 * @throws NodeNotFoundException
+	 */
+	void setColor(E o, boolean red) throws NodeNotFoundException {
+		Node node = node(root, o);
+		if(red)
+			node.color = COLOR.RED;
+		else
+			node.color = COLOR.BLACK;
+	}
+	//Assuming there is only one non-leaf children attached to node
+	private void deleteCase0(Node node) throws NodeNotFoundException {
+		if(node.color == COLOR.BLACK) {
+			Node child = node.left != null ? node.left : node.right;
+			child.parent = node.parent;
+			if(node.parent.left != null && node.parent.left.value.equals(node.value))
+				node.parent.left = child;
+			else
+				node.parent.right = child;
+			if(child.color == COLOR.RED)
+				child.color = COLOR.BLACK;
+			else
+				deleteCase1(child);
+		}
+	}
+	private void deleteCase1(Node node) throws NodeNotFoundException {
+		if(!node.value.equals(root.value))
+			deleteCase2(node);
+	}
+	private void deleteCase2(Node node) throws NodeNotFoundException {
+		Node sibling = (node.parent.left != null && node.parent.left.value.equals(node.value)) ? 
+				node.parent.right 
+				: node.parent.left;
+		if(sibling.color == COLOR.RED) {
+			node.parent.color = COLOR.RED;
+			sibling.color = COLOR.RED;
+			if(node.parent.left != null && node.value.equals(node.parent.left.value))
+				rotateLeft(node.parent);
+			else
+				rotateRight(node.parent);
+		} else
+			deleteCase3(node, sibling, node.parent);
+	}
+	private void deleteCase3(Node node, Node sibling, Node parent) throws NodeNotFoundException {
+		Node left = sibling.left;
+		Node right = sibling.right;
+		if(parent.color == COLOR.BLACK && sibling.color == COLOR.BLACK &&
+				(left == null || left.color == COLOR.BLACK) &&
+				(right == null || right.color == COLOR.BLACK)) {
+			sibling.color = COLOR.RED;
+			deleteCase1(parent);
+		} else
+			deleteCase4(node, sibling, parent, left, right);
+	}
+	private void deleteCase4(Node node, Node sibling, Node parent, Node left, Node right) throws NodeNotFoundException {
+		if(parent.color == COLOR.RED &&
+				sibling.color == COLOR.BLACK &&
+				(left == null || left.color == COLOR.BLACK) &&
+				(right == null || right.color == COLOR.BLACK)) {
+			sibling.color = COLOR.RED;
+			parent.color = COLOR.BLACK;
+		} else
+			deleteCase5(node, sibling, parent, left, right);
+	}
+	private void deleteCase5(Node node, Node sibling, Node parent, Node left, Node right) throws NodeNotFoundException {
+		if(sibling.color == COLOR.BLACK) {
+			if(parent.left != null && parent.left.value.equals(node.value) &&
+					(left.color == COLOR.RED) &&
+					(right == null || right.color == COLOR.BLACK)) {
+				sibling.color = COLOR.RED;
+				left.color = COLOR.BLACK;
+				rotateRight(sibling);
+			} else if(parent.right != null && parent.right.value.equals(node.value) &&
+					(left == null || left.color == COLOR.BLACK) &&
+					right.color == COLOR.RED) {
+				sibling.color = COLOR.RED;
+				right.color = COLOR.BLACK;
+				rotateLeft(sibling);
+			}
+		}
+		deleteCase6(node, sibling, parent, left, right);
+	}
+	private void deleteCase6(Node node, Node sibling, Node parent, Node left, Node right) throws NodeNotFoundException {
+		sibling.color = parent.color;
+		parent.color = COLOR.BLACK;
+		if(parent.left != null && node.value.equals(parent.left.value)) {
+			right.color = COLOR.BLACK;
+			rotateLeft(parent);
+		} else {
+			left.color = COLOR.BLACK;
+			rotateRight(parent);
+		}
+	}
+	private void deferDelete(Node node) throws NodeNotFoundException {
+		Node nodeToReplace;
+		if(Math.random() > 0.5)
+			nodeToReplace = successorNode(node);
+		else
+			nodeToReplace = predecessorNode(node);
+		node.value = nodeToReplace.value;
 		remove(nodeToReplace);
 	}
 	@Override
@@ -661,18 +613,25 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		if(isEmpty())
 			return null;
 		else
-			return nodeList.get(rootIndex);
+			return root.value;
 	}
 	@Override
 	public List<E> siblings(E e) throws NodeNotFoundException {
 		checkNode(e);
-		E parent = parent(e);
-		if(parent != null) {
-			List<E> children = children(parent);
-			children.remove(e);
+		if(size == 0)
+			throw new NodeNotFoundException("No node was found for the object");
+		else {
+			Node parent = node(root, e).parent;
+			ArrayList<E> children = new ArrayList<E>(1);
+			if(parent != null) {
+				if(parent.left != null && parent.left.value.equals(e)) {
+					if(parent.right != null)
+						children.add(parent.right.value);
+				} else
+					children.add(parent.left.value);
+			}
 			return children;
-		} else
-			return new ArrayList<E>();
+		}
 	}
 	@Override
 	public int size() {
@@ -687,21 +646,16 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		return getCurrentList().toArray(a);
 	}
 
-	private void addChild(Node parentNode, E child) {
-		Node node = new Node();
-		node.parent = parentNode;
-		node.color = COLOR.RED;
-		if(parentNode.value.compareTo(child) > 0)
-			parentNode.right = child;
+	private Node addChild(Node parentNode, E child) {
+		Node childNode = new Node();
+		childNode.parent = parentNode;
+		childNode.color = COLOR.RED;
+		childNode.value = child;
+		if(parentNode.value.compareTo(child) < 0)
+			parentNode.right = childNode;
 		else
-			parentNode.left = child;
-		size++;
-		int currentDepth = 2;
-		while(parentNode != null)	{
-			parentNode = parentNode.parent;
-			currentDepth++;
-		}
-		depth = Math.max(currentDepth, depth);
+			parentNode.left = childNode;
+		return childNode;
 	}
 	private void addRoot(E child) {
 		root = new Node();
@@ -711,7 +665,7 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 		depth++;
 	}
 
-	private void checkNode(E child) {
+	private void checkNode(Object child) {
 		if(child == null)
 			throw new IllegalArgumentException("null nodes are not allowed");
 	}
@@ -719,61 +673,51 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 	private List<E> getCurrentList() {
 		return inOrderTraversal();
 	}
-	private List<E> inorderOrderTraversal(int nodeIndex, ArrayList<E> list) {
-		int[] children = childrenArray.get(nodeIndex);
-		if(children.length > 0)	{
-			int i = 0;
-			for(int len = (int)Math.ceil((double)children.length / 2); i < len; i++)
-				if(children[i] > -1)
-					inorderOrderTraversal(children[i], list);
-			list.add(nodeList.get(nodeIndex));
-			for(int len = children.length; i < len; i++)
-				if(children[i] > -1)
-					inorderOrderTraversal(children[i], list);
-		}
-		else
-			list.add(nodeList.get(nodeIndex));
+	private List<E> inOrderTraversal(Node node, ArrayList<E> list) {
+		if(node.left != null)
+			inOrderTraversal(node.left, list);
+		list.add(node.value);
+		if(node.right != null)
+			inOrderTraversal(node.right, list);
 		return list;
 	}
-	private boolean isChildrenArrayEmpty(int[] children) {
-		for (int i = 0; i < children.length; i++)
-			if(children[i] != -1)
-				return false;
-		return true;
-	}
-	private List<E> levelOrderTraversal(ArrayList<E> list, LinkedList<Integer> queue) {
+	private List<E> levelOrderTraversal(ArrayList<E> list, LinkedList<Node> queue) {
 		while(!queue.isEmpty()) {
-			list.add(nodeList.get(queue.getFirst()));
-			for(int i : childrenArray.get(queue.getFirst()))
-				if(i > -1)
-					queue.add(i);
+			list.add(queue.getFirst().value);
+			if(queue.getFirst().left != null)
+				queue.add(queue.getFirst().left);
+			if(queue.getFirst().right != null)
+				queue.add(queue.getFirst().right);
 			queue.remove();
 		}
 		return list;
 	}
-	private List<E> postOrderTraversal(int nodeIndex, ArrayList<E> list) {
-		for(int  i :  childrenArray.get(nodeIndex))
-			if(i > -1)
-				postOrderTraversal(i, list);
-		if(nodeList.get(nodeIndex) != null)
-			list.add(nodeList.get(nodeIndex));
+	private List<E> postOrderTraversal(Node node, ArrayList<E> list) {
+		if(node.left != null)
+			postOrderTraversal(node.left, list);
+		if(node.right != null)
+			postOrderTraversal(node.right, list);
+		list.add(node.value);
 		return list;
 	}
-	private List<E> preOrderTraversal(int nodeIndex, ArrayList<E> list) {
-		if(nodeList.get(nodeIndex) != null)
-			list.add(nodeList.get(nodeIndex));
-		for(int i : childrenArray.get(nodeIndex))
-			if(i > -1)
-				preOrderTraversal(i, list);
+	private List<E> preOrderTraversal(Node node, ArrayList<E> list) {
+		list.add(node.value);
+		if(node.left != null)
+			preOrderTraversal(node.left, list);
+		if(node.right != null)
+			preOrderTraversal(node.right, list);
 		return list;
 	}
-	private int recalculateDepth(int index, int depth) {
+	private int recalculateDepth(Node node, int depth) {
 		int childDepth = depth + 1;
-		if(isChildrenArrayEmpty(childrenArray.get(index)))
+		if(node.left == null && node.right == null)
 			return childDepth;
-		for(int i : childrenArray.get(index))
-			if(i != -1)
-				depth = Math.max(depth, recalculateDepth(i, childDepth));
+		else {
+			if(node.left != null)
+				depth = Math.max(depth, recalculateDepth(node.left, childDepth));
+			if(node.right != null)
+				depth = Math.max(depth, recalculateDepth(node.right, childDepth));
+		}
 		return depth;
 	}
 	@Override
@@ -786,7 +730,16 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 	 * @throws NodeNotFoundException
 	 */
 	public E left(E parent) throws NodeNotFoundException {
-		return child(parent, 0);
+		checkNode(parent);
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for object");
+		else {
+			Node node = node(root, parent);
+			if(node.left != null)
+				return node.left.value;
+			else
+				return null;
+		}
 	}
 	/**
 	 * @param parent
@@ -794,25 +747,28 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 	 * @throws NodeNotFoundException
 	 */
 	public E right(E parent) throws NodeNotFoundException {
-		return child(parent, 1);
+		checkNode(parent);
+		if(isEmpty())
+			throw new NodeNotFoundException("No node was found for object");
+		else {
+			Node node = node(root, parent);
+			if(node.right != null)
+				return node.right.value;
+			else
+				return null;
+		}
 	}
-	private E findParent(E root, E child) throws NodeNotFoundException
-	{
-		if(child.compareTo(root) > 0)
-		{
-			E right = right(root);
-			if(right != null)
-				return findParent(right, child);
-			else
-				return root;
-		}
-		else
-		{
-			E left = left(root);
-			if(left != null)
-				return findParent(left, child);
-			else
-				return root;
-		}
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(Object o) {
+		if(o != null && o instanceof BinaryRedBlackTree) {
+			try {
+				return new TreeHelper().isEqual((BinaryRedBlackTree<E>) o, this, ((BinaryRedBlackTree<E>) o).root(), root());
+			} catch (NodeNotFoundException e) {
+				e.printStackTrace();
+				return false;
+			}
+		} else
+			return false;
 	}
 }

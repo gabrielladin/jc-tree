@@ -1,5 +1,6 @@
 package com.gaurav.tree;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -10,7 +11,7 @@ import org.testng.annotations.Test;
 public class LinkedBinarySearchTreeTest {
 	@DataProvider
 	public Object[][] getTree() {
-		LinkedBinarySearchTree<String> binarySearchTree = new LinkedBinarySearchTree<String>();
+		BinarySearchTree<String> binarySearchTree = new BinarySearchTree<String>();
 		binarySearchTree.add("C6");
 		binarySearchTree.add("C3");
 		binarySearchTree.add("C9");
@@ -35,11 +36,11 @@ public class LinkedBinarySearchTreeTest {
 			                |       |      |    |       |
 			                C2      C5     C8   CA      CC
 		 */
-		return new Object[][]{{0, new LinkedBinarySearchTree<String>()},{1, binarySearchTree}};
+		return new Object[][]{{0, new BinarySearchTree<String>()},{1, binarySearchTree}};
 	  }
 
   @Test(dataProvider = "getTree")
-  public void addE(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void addE(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	int initialSize = tree.size();
     Assert.assertEquals(true, tree.add("C1.5"));
     Assert.assertEquals(initialSize, tree.size() - 1);
@@ -60,12 +61,12 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree", expectedExceptions = {UnsupportedOperationException.class})
-  public void addEE(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void addEE(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  Assert.assertEquals(true, tree.add(tree.root(), "New"));
   }
 
   @Test(dataProvider = "getTree")
-  public void addAllCollectionextendsE(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void addAllCollectionextendsE(int testCaseNumber, BinarySearchTree<String> tree) {
 	int initialSize = tree.size();
 	for (String i : Arrays.asList(new String[]{"1","2","3"}))
 		tree.add(i);
@@ -76,7 +77,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void addAllECollectionextendsE(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void addAllECollectionextendsE(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  int initialSize = tree.size();
 	  if(initialSize > 0) {
 	      for (String i : Arrays.asList(new String[]{"1","2","3"}))
@@ -89,7 +90,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void children(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void children(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  try {
 		  tree.children(null);
 		  Assert.assertEquals(false, true);
@@ -108,13 +109,13 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void clear(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void clear(int testCaseNumber, BinarySearchTree<String> tree) {
 	tree.clear();
     Assert.assertEquals(0, tree.size());
   }
 
   @Test(dataProvider = "getTree")
-  public void commonAncestor(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void commonAncestor(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	for(String i: tree)
 		for(String j: tree)
 			Assert.assertNotEquals(null, tree.commonAncestor(i, j));
@@ -126,27 +127,23 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void contains(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void contains(int testCaseNumber, BinarySearchTree<String> tree) {
 	  Assert.assertEquals(false, tree.contains(null));
 	  Assert.assertEquals(false, tree.contains("Not present"));
+	  Assert.assertEquals(false, tree.contains(new ArrayList<Object>()));
 	  for(String i: tree)
 		  Assert.assertEquals(true, tree.contains(i));
   }
 
   @Test(dataProvider = "getTree")
-  public void containsAll(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
-	  try {
-		  tree.containsAll(Arrays.asList(new String[]{null}));
-		  Assert.assertEquals(false, true);
-	  } catch (IllegalArgumentException e) {
-		  //passed
-	  }
+  public void containsAll(int testCaseNumber, BinarySearchTree<String> tree) {
+	  Assert.assertEquals(false, tree.containsAll(Arrays.asList(new String[]{null})));
 	  Assert.assertEquals(false, tree.containsAll(Arrays.asList(new String[]{"Not Present"})));
 	  Assert.assertEquals(true, tree.containsAll(tree.inOrderTraversal())); 
   }
 
   @Test(dataProvider = "getTree")
-  public void depth(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void depth(int testCaseNumber, BinarySearchTree<String> tree) {
 	  if(testCaseNumber == 0)
 		  Assert.assertEquals(0, tree.depth());
 	  else if(testCaseNumber == 1) {
@@ -162,7 +159,7 @@ public class LinkedBinarySearchTreeTest {
 
   
   @Test(dataProvider = "getTree")
-  public void inOrderTraversal(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void inOrderTraversal(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  case 0:
 		  Assert.assertEquals(true, tree.inOrderTraversal().isEmpty());
@@ -176,7 +173,7 @@ public class LinkedBinarySearchTreeTest {
 
   
   @Test(dataProvider = "getTree")
-  public void isAncestor(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void isAncestor(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  if(testCaseNumber == 1) {
 		  Assert.assertEquals(false, tree.isAncestor(null, "C2"));
 		  try {
@@ -202,7 +199,7 @@ public class LinkedBinarySearchTreeTest {
   }
   
   @Test(dataProvider = "getTree")
-  public void isDescendant(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void isDescendant(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  if(testCaseNumber == 1) {
 		  Assert.assertEquals(false, tree.isDescendant("C2", null));
 		  try {
@@ -231,7 +228,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void isEmpty(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void isEmpty(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(true, tree.isEmpty());
@@ -249,7 +246,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void leaves(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void leaves(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(true, tree.leaves().isEmpty());
@@ -263,7 +260,7 @@ public class LinkedBinarySearchTreeTest {
   }
   
   @Test(dataProvider = "getTree")
-  public void levelOrderTraversal(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void levelOrderTraversal(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(true, tree.levelOrderTraversal().isEmpty());
@@ -288,7 +285,7 @@ public class LinkedBinarySearchTreeTest {
   }
   
   @Test(dataProvider = "getTree")
-  public void parent(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void parent(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		 try {
@@ -313,7 +310,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void postOrderTraversal(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void postOrderTraversal(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(true, tree.postOrderTraversal().isEmpty());
@@ -326,7 +323,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void preOrderTraversal(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void preOrderTraversal(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(true, tree.preOrderTraversal().isEmpty());
@@ -351,7 +348,7 @@ public class LinkedBinarySearchTreeTest {
   }
   @SuppressWarnings("unchecked")
   @Test(dataProvider = "getTree")
-  public void remove(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void remove(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		try {
@@ -365,17 +362,17 @@ public class LinkedBinarySearchTreeTest {
 	  	case 1:
 	  		Assert.assertEquals(false, tree.remove("Not present"));
 	  		
-	  		LinkedBinarySearchTree<String> clone = (LinkedBinarySearchTree<String>) tree.clone();
+	  		BinarySearchTree<String> clone = (BinarySearchTree<String>) tree.clone();
 	  		Assert.assertEquals(true, clone.remove("C2"));//delet case 1
 	  		Assert.assertEquals(clone.inOrderTraversal().toArray(new String[0]), new String[]{"C1","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC"});
 	  		Assert.assertEquals(clone.preOrderTraversal().toArray(new String[0]), new String[]{"C6","C3","C1","C4","C5","C9","C7","C8","CB","CA","CC"});
 	  		
-	  		clone = (LinkedBinarySearchTree<String>) tree.clone();
+	  		clone = (BinarySearchTree<String>) tree.clone();
 	  		Assert.assertEquals(true, clone.remove("C1"));//delete case 2
 	  		Assert.assertEquals(clone.inOrderTraversal().toArray(new String[0]), new String[]{"C2","C3","C4","C5","C6","C7","C8","C9","CA","CB","CC"});
 	  		Assert.assertEquals(clone.preOrderTraversal().toArray(new String[0]), new String[]{"C6","C3","C2","C4","C5","C9","C7","C8","CB","CA","CC"});
 	  		
-	  		clone = (LinkedBinarySearchTree<String>) tree.clone();
+	  		clone = (BinarySearchTree<String>) tree.clone();
 	  		Assert.assertEquals(true, clone.remove("C6"));//delete case 3
 	  		Assert.assertEquals(clone.inOrderTraversal().toArray(new String[0]), new String[]{"C1","C2","C3","C4","C5","C7","C8","C9","CA","CB","CC"});
 	  		Assert.assertEquals(true, clone.remove("C1"));//delete twice and check
@@ -384,7 +381,7 @@ public class LinkedBinarySearchTreeTest {
 	  }
   }
   @Test(dataProvider = "getTree")
-  public void removeAll(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void removeAll(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(true, tree.preOrderTraversal().isEmpty());
@@ -400,7 +397,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void retainAll(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void retainAll(int testCaseNumber, BinarySearchTree<String> tree) {
    try {
 	   tree.retainAll(Arrays.asList(new String[]{""}));
    } catch (UnsupportedOperationException e) {
@@ -409,7 +406,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void root(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void root(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(null, tree.root());
@@ -421,7 +418,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void siblings(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void siblings(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		try {
@@ -458,7 +455,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void size(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void size(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(0, tree.size());
@@ -474,7 +471,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void toArray(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void toArray(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(new String[]{}, tree.toArray());
@@ -486,7 +483,7 @@ public class LinkedBinarySearchTreeTest {
   }
 
   @Test(dataProvider = "getTree")
-  public void toArrayT(int testCaseNumber, LinkedBinarySearchTree<String> tree) {
+  public void toArrayT(int testCaseNumber, BinarySearchTree<String> tree) {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		Assert.assertEquals(new String[]{}, tree.toArray(new String[0]));
@@ -498,19 +495,19 @@ public class LinkedBinarySearchTreeTest {
 	  }
   }
   @Test(dataProvider = "getTree")
-  public void equals(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void equals(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  switch(testCaseNumber) {
 	  	case 0:
-	  		LinkedBinarySearchTree<String> LinkedBinarySearchTree = new LinkedBinarySearchTree<String>();
+	  		BinarySearchTree<String> LinkedBinarySearchTree = new BinarySearchTree<String>();
 	  		Assert.assertEquals(true, tree.equals(LinkedBinarySearchTree));
 	  		LinkedBinarySearchTree.add("Root2");
 	  		Assert.assertEquals(false, tree.equals(LinkedBinarySearchTree));
 	  		break;
 	  	case 1:
 	  		@SuppressWarnings("unchecked")
-			LinkedBinarySearchTree<String> clone = (LinkedBinarySearchTree<String>) tree.clone();
+			BinarySearchTree<String> clone = (BinarySearchTree<String>) tree.clone();
 	  		@SuppressWarnings("unchecked")
-			LinkedBinarySearchTree<String> clone2 = (LinkedBinarySearchTree<String>) tree.clone();
+			BinarySearchTree<String> clone2 = (BinarySearchTree<String>) tree.clone();
 	  		Assert.assertEquals(true, tree.equals(clone));
 	  		clone.remove("C2");
 	  		Assert.assertEquals(false, tree.equals(clone));
@@ -520,7 +517,7 @@ public class LinkedBinarySearchTreeTest {
 	  }
   }
   @Test(dataProvider = "getTree")
-  public void left(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void left(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  switch(testCaseNumber) {
 	  	case 0:
 	  		try {
@@ -545,7 +542,7 @@ public class LinkedBinarySearchTreeTest {
 	  }
   }
   @Test(dataProvider = "getTree")
-  public void right(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void right(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  switch(testCaseNumber) {
 	  	case 1:
 	  		try {
@@ -570,7 +567,7 @@ public class LinkedBinarySearchTreeTest {
 	  }
   }
   @Test(dataProvider = "getTree")
-  public void successor(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void successor(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  switch(testCaseNumber) {
 	  	case 1:
 	  		try {
@@ -595,7 +592,7 @@ public class LinkedBinarySearchTreeTest {
 	  }
   }
   @Test(dataProvider = "getTree")
-  public void predecessor(int testCaseNumber, LinkedBinarySearchTree<String> tree) throws NodeNotFoundException {
+  public void predecessor(int testCaseNumber, BinarySearchTree<String> tree) throws NodeNotFoundException {
 	  switch(testCaseNumber) {
 	  	case 1:
 	  		try {
