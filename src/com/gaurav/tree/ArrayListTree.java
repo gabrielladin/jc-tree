@@ -61,7 +61,7 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable {
 			if(childIndex == -1) {
 				nodeList.add(child);
 				parentList.add(parentIndex);
-				childrenList.get(parentIndex).add(getChildAddPosition(children(parent), child), nodeList.size() - 1);
+				childrenList.get(parentIndex).add(nodeList.size() - 1);
 				childrenList.add(new ArrayList<Integer>());
 				size++;
 				int currentDepth = 2;
@@ -126,14 +126,30 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable {
 		checkNode(e);
 		int index = nodeList.indexOf(e);
 		if(index > -1) {
-			ArrayList<E> children = new ArrayList<E>();
-			for (Iterator<Integer> iterator = childrenList.get(index).iterator(); iterator.hasNext();) {
-				children.add(nodeList.get(iterator.next()));
+			ArrayList<Integer> childrenIndexList = childrenList.get(index);
+			ArrayList<E> children = new ArrayList<E>(childrenIndexList.size());
+			for (Integer i : childrenIndexList) {
+				children.add(nodeList.get(i));
 			}
 			return children;
 		} else
 			throw new NodeNotFoundException("No node was found for object");
 	}
+	/*@Override
+	public List<E> children(E e) throws NodeNotFoundException {
+		checkNode(e);
+		int index = nodeList.indexOf(e);
+		if(index > -1) {
+			ArrayList<Integer> childrenIndexList = childrenList.get(index);
+			Object[] array = new Object[childrenList.size()];
+			int j = 0;
+			for (Integer i : childrenIndexList) {
+				array[j++] = (nodeList.get(i));
+			}
+			return (List<E>) Arrays.asList(array);
+		} else
+			throw new NodeNotFoundException("No node was found for object");
+	}*/
 	@Override
 	public void clear() {
 		nodeList.clear();

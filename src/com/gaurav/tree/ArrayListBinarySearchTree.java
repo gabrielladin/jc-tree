@@ -230,11 +230,9 @@ public class ArrayListBinarySearchTree<E extends Comparable<E>> implements Sorte
 		else
 			return nodeList.contains(o);
 	}
-	@SuppressWarnings("unchecked")
 	@Override
 	public boolean containsAll(Collection<?> c) {
 		for(Object i : c) {
-			checkNode((E) i);
 			if(!nodeList.contains(i))
 				return false;
 		}
