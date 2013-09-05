@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * 
  * @author Gaurav Saxena
- *
+ * ImplementsSelf-balancing red black tree as given in <a href='http://en.wikipedia.org/wiki/Red%E2%80%93black_tree'>Wikipedia</a>
  * @param <E>
  */
 public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E>, Cloneable {
@@ -208,15 +208,14 @@ public class BinaryRedBlackTree<E extends Comparable<E>> implements SortedTree<E
 			retVal |= add(iterator.next());
 		return retVal;
 	}
+	/**
+	 * Unsupported Operation
+	 * A red-black tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use {@link #addAll(Collection)})
+	 * @see com.gaurav.tree.Tree#add(java.lang.Object, java.lang.Object)
+	 **/
 	@Override
 	public boolean addAll(E parent, Collection<? extends E> c) {
-		try{
-			for (Iterator<? extends E> iterator = c.iterator(); iterator.hasNext();)
-				add(parent, iterator.next());
-			return true;
-		} catch(NodeNotFoundException ex) {
-			return false;
-		}
+		throw new UnsupportedOperationException("A red-black tree determines parent of a child on its own and hence it is not possible to add the child to any given parent. Please use add(child)");
 	}
 	@Override
 	public List<E> children(E e) throws NodeNotFoundException {
