@@ -28,8 +28,10 @@ public class KAryTree<E> extends ArrayListTree<E> {
 	}
 	@Override
 	public boolean add(E parent, E child) throws NodeNotFoundException {
-		if(children(parent).size() < k)
-			return add(parent, child);
+		if(parent == null) //if parent is null
+			return super.add(parent, child);//add root
+		else if (children(parent).size() < k)
+			return super.add(parent, child);
 		else
 			throw new IndexOutOfBoundsException("Cannot add more than " + k +" children to a parent");
 	}

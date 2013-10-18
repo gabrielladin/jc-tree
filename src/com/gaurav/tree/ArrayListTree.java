@@ -84,7 +84,7 @@ public class ArrayListTree<E> implements Tree<E>, Cloneable {
 				addRoot(child);
 				return true;
 			} else
-				throw new IllegalArgumentException("parent cannot be null except for root element");
+				throw new IllegalArgumentException("parent cannot be null except for root element. The tree already has a root.");
 		} else
 			return false;
 	}

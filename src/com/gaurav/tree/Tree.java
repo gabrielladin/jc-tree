@@ -41,7 +41,7 @@ public interface Tree<E> extends Collection<E>{
 	 * @param child object 
 	 * @return true if parent was found and child is not already in the tree, otherwise false
 	 * @throws NodeNotFoundException if parent is not found
-	 * @deprecated Not all trees can add any child to any parent e.g. BST
+	 *@deprecated Not all trees can add any child to any parent e.g. BST
 	 */
 	public boolean add(E parent, E child) throws NodeNotFoundException;
 	/**
